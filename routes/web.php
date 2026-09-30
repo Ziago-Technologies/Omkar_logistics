@@ -13,6 +13,7 @@ use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\GstLookupController;
 use App\Http\Middleware\CheckPermission;
 
 // Auth Routes
@@ -203,4 +204,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/system/roles', [RoleController::class, 'store'])->name('system.role.store');
         Route::delete('/system/roles/{id}', [RoleController::class, 'destroy'])->name('system.role.destroy');
     });
+
+    // API: Live GSTIN Lookup & Verification
+    Route::get('/api/gst/lookup/{gstin?}', [GstLookupController::class, 'lookup'])->name('api.gst.lookup');
+    Route::post('/api/gst/lookup', [GstLookupController::class, 'lookup'])->name('api.gst.lookup.post');
+    Route::delete('/api/gst/cache/{gstin}', [GstLookupController::class, 'clearCache'])->name('api.gst.clear_cache');
 });

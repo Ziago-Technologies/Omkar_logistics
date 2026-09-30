@@ -825,62 +825,62 @@
         }
 
         if (gstVal.length === 15) {
-            statusEl.textContent = 'Searching...';
-            statusEl.style.color = '#ff9900';
+            statusEl.innerHTML = '<span style="color:#f57c00;">⏳ Verifying GSTIN...</span>';
 
-            // Simulate GST API lookup. Specifically handles the sample client GST code.
-            setTimeout(() => {
-                const stateCode = gstVal.substring(0, 2);
-                if (gstVal === '18BHEPB5443C1ZT') {
-                    document.getElementById('ledger_name').value = 'ARYAHI TECH';
-                    document.getElementById('contact_person').value = 'RITA BORUAH';
-                    document.getElementById('address').value = '4th Floor, Madhab Tower, G S Road, Rukminigaon, Guwahati, Kamrup Metropolitan, Assam';
-                    selectStateByCode('18', 'GUWAHATI');
-                    document.getElementById('pin_code').value = '781022';
-                    statusEl.textContent = '✔ Verified';
-                    statusEl.style.color = 'green';
-                } else if (gstVal === '18ABBCA1705D1ZA') {
-                    document.getElementById('ledger_name').value = 'ZIAGO TECHNOLOGIES PRIVATE LIMITED';
-                    document.getElementById('contact_person').value = 'ZIAGO TECHNOLOGIES PRIVATE LIMITED';
-                    document.getElementById('address').value = '4th Floor, Madhab Tower, Rukminigaon, Khanapara, G.S Road, Guwahati';
-                    selectStateByCode('18', 'GUWAHATI');
-                    document.getElementById('pin_code').value = '781022';
-                    statusEl.textContent = '✔ Verified';
-                    statusEl.style.color = 'green';
-                } else if (gstVal === '18AAHCD3526G2ZP') {
-                    document.getElementById('ledger_name').value = 'DHARAMPAL SATYAPAL FOODS LIMITED';
-                    document.getElementById('contact_person').value = 'DHARAMPAL SATYAPAL FOODS LIMITED';
-                    document.getElementById('address').value = 'Godown No. 2, Amit Choudhury, National Highway No. 37, Guwahati, Kamrup';
-                    selectStateByCode('18', 'GUWAHATI');
-                    document.getElementById('pin_code').value = '781034';
-                    statusEl.textContent = '✔ Verified';
-                    statusEl.style.color = 'green';
-                } else if (gstVal === '18DBOPK3296Q1ZK') {
-                    document.getElementById('ledger_name').value = 'B.K. ENTERPRISE';
-                    document.getElementById('contact_person').value = 'BIJIT KALITA';
-                    document.getElementById('address').value = 'BISHNU GHOSH, B.K. ENTERPRISE, J.N. ROAD, Moon Light High School, Tezpur Doloni, Tezpur, Sonitpur, Assam';
-                    selectStateByCode('18', 'TEZPUR');
-                    document.getElementById('pin_code').value = '784001';
-                    statusEl.textContent = '✔ Verified';
-                    statusEl.style.color = 'green';
-                } else if (gstVal === '18AHUPP1218N1ZO') {
-                    document.getElementById('ledger_name').value = 'SHREE RAM PAREEK';
-                    document.getElementById('contact_person').value = 'SHREE RAM PAREEK';
-                    document.getElementById('address').value = '-, BISHNUPUR, GOPINATH NAGAR, Kamrup, Assam';
-                    selectStateByCode('18', 'GUWAHATI');
-                    document.getElementById('pin_code').value = '781016';
-                    statusEl.textContent = '✔ Verified';
-                    statusEl.style.color = 'green';
-                } else {
-                    // General simulated template for other valid GST format inputs
-                    document.getElementById('ledger_name').value = 'AUTO PULL BUSINESS - ' + gstVal;
-                    document.getElementById('address').value = 'Principal Place of Business Office, State Code: ' + stateCode;
-                    selectStateByCode(stateCode, 'GUWAHATI');
-                    document.getElementById('pin_code').value = '781001';
-                    statusEl.textContent = '✔ Auto-filled';
-                    statusEl.style.color = 'green';
+            fetch(`{{ url('/api/gst/lookup') }}/${encodeURIComponent(gstVal)}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-            }, 800);
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    const stateCode = data.state_code || gstVal.substring(0, 2);
+                    
+                    if (data.legal_name) {
+                        const ledgerNameEl = document.getElementById('ledger_name');
+                        if (ledgerNameEl && (!ledgerNameEl.value || ledgerNameEl.value.startsWith('AUTO PULL'))) {
+                            ledgerNameEl.value = data.legal_name;
+                        }
+                    }
+                    if (data.trade_name) {
+                        const contactEl = document.getElementById('contact_person');
+                        if (contactEl && !contactEl.value) {
+                            contactEl.value = data.trade_name;
+                        }
+                    }
+                    if (data.address) {
+                        const addrEl = document.getElementById('address');
+                        if (addrEl && (!addrEl.value || addrEl.value.startsWith('Principal Place'))) {
+                            addrEl.value = data.address;
+                        }
+                    }
+                    if (data.pincode) {
+                        const pinEl = document.getElementById('pin_code');
+                        if (pinEl) pinEl.value = data.pincode;
+                    }
+
+                    selectStateByCode(stateCode, data.city);
+
+                    if (data.is_verified) {
+                        const statusBadge = (data.status || 'Active').toUpperCase();
+                        const isLive = data.source === 'live_api';
+                        statusEl.innerHTML = `<span style="color:#2e7d32; font-weight:700;">✔ ${statusBadge} ${isLive ? '(Live)' : ''}</span>`;
+                    } else {
+                        statusEl.innerHTML = `<span style="color:#003087; font-weight:600;">✔ ${data.state_name || ('State ' + stateCode)}</span>`;
+                    }
+                } else {
+                    selectStateByCode(gstVal.substring(0, 2));
+                    statusEl.innerHTML = '<span style="color:#c62828;">⚠️ ' + (data.message || 'Invalid GSTIN') + '</span>';
+                }
+            })
+            .catch(err => {
+                console.error('GST lookup error:', err);
+                const stateCode = gstVal.substring(0, 2);
+                selectStateByCode(stateCode);
+                statusEl.innerHTML = `<span style="color:#003087;">✔ State ${stateCode}</span>`;
+            });
         } else {
             statusEl.textContent = '';
         }
