@@ -50,17 +50,25 @@ return new class extends Migration
 
             // 3. Remove series 'A' from the series master table and ensure '26-27'
             if (Schema::hasTable('series')) {
-                DB::table('series')->where('name', 'A')->orWhere('name', 'a')->delete();
-
-                $has2627 = DB::table('series')->where('name', '26-27')->exists();
-                if (!$has2627) {
-                    DB::table('series')->insert([
+                $series2627 = DB::table('series')->where('name', '26-27')->first();
+                if (!$series2627) {
+                    $series2627Id = DB::table('series')->insertGetId([
                         'name'        => '26-27',
                         'description' => 'FY 2026-2027',
                         'is_active'   => 1,
                         'created_at'  => now(),
                         'updated_at'  => now(),
                     ]);
+                } else {
+                    $series2627Id = $series2627->id;
+                }
+
+                $seriesAIds = DB::table('series')->where('name', 'A')->orWhere('name', 'a')->pluck('id')->toArray();
+                if (!empty($seriesAIds)) {
+                    if (Schema::hasTable('bilties') && Schema::hasColumn('bilties', 'series_id')) {
+                        DB::table('bilties')->whereIn('series_id', $seriesAIds)->update(['series_id' => $series2627Id]);
+                    }
+                    DB::table('series')->whereIn('id', $seriesAIds)->delete();
                 }
             }
         });
