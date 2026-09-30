@@ -27,6 +27,18 @@
             font-family: 'Poppins', sans-serif;
         }
 
+        /* Hide number input spinners/up-down controls across all browsers */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
         body {
             min-height: 100vh;
             display: flex;

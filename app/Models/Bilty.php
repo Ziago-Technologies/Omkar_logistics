@@ -16,6 +16,12 @@ class Bilty extends Model
         'invoice_date',
         'from_location_id',
         'to_location_id',
+        'from_city_id',
+        'to_city_id',
+        'from_state_id',
+        'to_state_id',
+        'from_country_id',
+        'to_country_id',
         'consignor_id',
         'consignor_name',
         'consignor_mobile',
@@ -110,32 +116,52 @@ class Bilty extends Model
 
     public function fromCity(): BelongsTo
     {
-        return $this->belongsTo(CityModel::class, 'from_location_id');
+        return $this->belongsTo(CityModel::class, 'from_city_id');
     }
 
     public function toCity(): BelongsTo
     {
-        return $this->belongsTo(CityModel::class, 'to_location_id');
+        return $this->belongsTo(CityModel::class, 'to_city_id');
+    }
+
+    public function fromState(): BelongsTo
+    {
+        return $this->belongsTo(StateModel::class, 'from_state_id');
+    }
+
+    public function toState(): BelongsTo
+    {
+        return $this->belongsTo(StateModel::class, 'to_state_id');
+    }
+
+    public function fromCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'from_country_id');
+    }
+
+    public function toCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'to_country_id');
     }
 
     public function getFromLocationNameAttribute()
     {
-        if ($this->fromLocation) {
-            return $this->fromLocation->name;
-        }
         if ($this->fromCity) {
             return $this->fromCity->name;
+        }
+        if ($this->fromLocation) {
+            return $this->fromLocation->name;
         }
         return '';
     }
 
     public function getToLocationNameAttribute()
     {
-        if ($this->toLocation) {
-            return $this->toLocation->name;
-        }
         if ($this->toCity) {
             return $this->toCity->name;
+        }
+        if ($this->toLocation) {
+            return $this->toLocation->name;
         }
         return '';
     }

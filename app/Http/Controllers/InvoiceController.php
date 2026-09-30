@@ -706,13 +706,13 @@ class InvoiceController extends Controller
             }
         }
 
-        // Filter by Destination
+        // Filter by Destination (city or hub location)
         if ($request->filled('destination')) {
             $dest = trim($request->destination);
             $query->where(function($q) use ($dest) {
-                $q->whereHas('toLocation', function($sq) use ($dest) {
+                $q->whereHas('toCity', function($sq) use ($dest) {
                     $sq->where('name', 'like', '%' . $dest . '%');
-                })->orWhereHas('toCity', function($sq) use ($dest) {
+                })->orWhereHas('toLocation', function($sq) use ($dest) {
                     $sq->where('name', 'like', '%' . $dest . '%');
                 });
             });

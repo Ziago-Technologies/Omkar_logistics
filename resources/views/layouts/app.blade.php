@@ -33,6 +33,18 @@
             text-transform: none !important;
         }
 
+        /* Hide number input spinners/up-down controls across all browsers */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -92,6 +104,28 @@
             font-weight: 600 !important;
             font-size: 13px !important;
             border-color: #cbd5e1 !important;
+        }
+
+        /* Ensure table inputs fill column header width with clean cell padding gaps and auto-expand column when data is longer */
+        .party-bill-table td input,
+        .party-bill-table td select,
+        .bilty-grid td input,
+        .bilty-grid td select,
+        .grid-table td input,
+        .grid-table td select,
+        .receipt-grid-table td input,
+        .receipt-grid-table td select,
+        .grid-input {
+            min-width: 100% !important;
+            width: 100%;
+            box-sizing: border-box !important;
+            field-sizing: content;
+        }
+
+        .autocomplete-grid-wrap {
+            position: relative;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
 
         /* Global Master, Form, Section Titles & Header Bars in UPPERCASE */
@@ -1251,6 +1285,150 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Global Auto-Fit Table Column Inputs when row data width is greater than column header width
+        window.autoFitGridInput = function(input) {
+            if (!input || input.type === 'checkbox' || input.type === 'radio' || input.tagName === 'SELECT') return;
+
+            const val = input.value || input.placeholder || '';
+            const wrap = input.closest('.autocomplete-grid-wrap');
+
+            if (!val) {
+                input.style.width = '100%';
+                if (wrap) wrap.style.width = '100%';
+                return;
+            }
+
+            if (!window._gridMeasureCanvasCtx) {
+                const canvas = document.createElement('canvas');
+                window._gridMeasureCanvasCtx = canvas.getContext('2d');
+            }
+            
+            const computed = window.getComputedStyle(input);
+            const font = computed.font || `${computed.fontWeight || '600'} ${computed.fontSize || '12.5px'} ${computed.fontFamily || 'sans-serif'}`;
+            window._gridMeasureCanvasCtx.font = font;
+
+            const textWidth = window._gridMeasureCanvasCtx.measureText(val).width;
+            const requiredWidth = Math.ceil(textWidth) + 24;
+
+            const td = input.closest('td');
+            let baseHeaderWidth = 0;
+            if (td && td.cellIndex !== undefined && td.closest('table')) {
+                const th = td.closest('table').querySelectorAll('th')[td.cellIndex];
+                if (th) {
+                    if (!th.dataset.initialWidth) {
+                        const attrW = th.getAttribute('width');
+                        if (attrW) {
+                            th.dataset.initialWidth = parseInt(attrW);
+                        } else {
+                            th.dataset.initialWidth = th.getBoundingClientRect().width;
+                        }
+                    }
+                    baseHeaderWidth = parseFloat(th.dataset.initialWidth) || 50;
+                }
+            }
+            if (!baseHeaderWidth && td) {
+                baseHeaderWidth = td.getBoundingClientRect().width;
+            }
+
+            if (requiredWidth > baseHeaderWidth) {
+                input.style.width = requiredWidth + 'px';
+                if (wrap) wrap.style.width = requiredWidth + 'px';
+            } else {
+                input.style.width = '100%';
+                if (wrap) wrap.style.width = '100%';
+            }
+        };
+
+        window.autoFitAllGridInputs = function() {
+            document.querySelectorAll('.grid-input, .party-bill-table td input, .bilty-grid td input, .grid-table td input, .receipt-grid-table td input').forEach(function(input) {
+                window.autoFitGridInput(input);
+            });
+        };
+
+        window.sanitizeNumericInput = function(input) {
+            if (!input) return;
+            let val = input.value;
+            if (val === null || val === undefined) return;
+
+            let clean = val.replace(/[^0-9.]/g, '');
+
+            const parts = clean.split('.');
+            if (parts.length > 2) {
+                clean = parts[0] + '.' + parts.slice(1).join('');
+            }
+
+            if (clean.startsWith('.')) {
+                clean = '0' + clean;
+            }
+
+            if (input.value !== clean) {
+                input.value = clean;
+            }
+        };
+
+        function isNumericCalcInput(el) {
+            if (!el || !el.matches) return false;
+            return el.matches('input[type="number"], input[inputmode="decimal"], .party-bill-table td input[name*="packages"], .party-bill-table td input[name*="weight"], .party-bill-table td input[name*="rate"], .party-bill-table td input[name*="charge"], .party-bill-table td input[name*="amount"], .party-bill-table td input[name*="freight"], .bilty-grid td input[type="number"], .grid-table td input[type="number"]');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            const el = e.target;
+            if (!isNumericCalcInput(el)) return;
+
+            if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key) || e.ctrlKey || e.metaKey) {
+                return;
+            }
+
+            if (e.key === '.' || e.key === 'Decimal') {
+                if (el.value.includes('.')) {
+                    e.preventDefault();
+                    return;
+                }
+                if (!el.value || el.value.trim() === '') {
+                    e.preventDefault();
+                    el.value = '0.';
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    return;
+                }
+            }
+
+            if (!/^[0-9]$/.test(e.key) && e.key !== '.' && e.key !== 'Decimal') {
+                e.preventDefault();
+            }
+        }, true);
+
+        document.addEventListener('input', function(e) {
+            const el = e.target;
+            if (isNumericCalcInput(el)) {
+                window.sanitizeNumericInput(el);
+            }
+            if (el && el.matches && el.matches('.grid-input, .party-bill-table td input, .bilty-grid td input, .grid-table td input, .receipt-grid-table td input')) {
+                const tr = el.closest('tr');
+                if (tr) {
+                    tr.querySelectorAll('.grid-input, td input').forEach(function(rowInput) {
+                        window.autoFitGridInput(rowInput);
+                    });
+                } else {
+                    window.autoFitGridInput(el);
+                }
+            }
+        });
+
+        document.addEventListener('paste', function(e) {
+            const el = e.target;
+            if (isNumericCalcInput(el)) {
+                setTimeout(function() {
+                    window.sanitizeNumericInput(el);
+                }, 10);
+            }
+        }, true);
+
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.matches && e.target.matches('.grid-input, .party-bill-table td input, .bilty-grid td input, .grid-table td input, .receipt-grid-table td input')) {
+                window.autoFitGridInput(e.target);
+            }
+        });
+
         // Global dismiss helper function for toasts and alert banners
         function dismissToast(el) {
             if (!el) return;

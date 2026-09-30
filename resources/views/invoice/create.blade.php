@@ -162,7 +162,7 @@
 
     .party-bill-table td {
         border: 1px solid #bbb;
-        padding: 3px 4px;
+        padding: 2px 3px !important;
         text-align: center;
         white-space: nowrap;
         color: #000;
@@ -171,7 +171,10 @@
     }
 
     /* Grid Input fields for inline editing */
-    .grid-input {
+    .grid-input,
+    .party-bill-table td input,
+    .party-bill-table td select {
+        min-width: 100% !important;
         width: 100%;
         height: 24px;
         border: 1.5px solid #7f9db9;
@@ -181,9 +184,12 @@
         font-weight: 600;
         font-family: inherit;
         padding: 1px 4px;
-        box-sizing: border-box;
+        box-sizing: border-box !important;
+        field-sizing: content;
     }
-    .grid-input:focus {
+    .grid-input:focus,
+    .party-bill-table td input:focus,
+    .party-bill-table td select:focus {
         border-color: #0055ff;
         outline: 1.5px solid #0055ff;
         background: #ffffea;
@@ -462,9 +468,6 @@
                         <label for="invoice_date">DATE</label>
                         <input type="date" name="invoice_date" id="invoice_date" value="{{ old('invoice_date', (isset($existingInvoice) && $existingInvoice->invoice_date) ? $existingInvoice->invoice_date->format('Y-m-d') : date('Y-m-d')) }}" style="width: 120px;" required>
                     </div>
-                    <div class="ctrl-group">
-                        <input type="text" id="live_time_display" readonly style="width: 80px; text-align: center; background: #ffffd0;" tabindex="-1">
-                    </div>
                 </div>
             </div>
 
@@ -572,10 +575,9 @@
                             <th width="35">SRNO</th>
                             <th width="75">DATE</th>
                             <th width="65">C.N.NO</th>
-                            <th width="90" class="col-third-party-cn">THIRD PARTY C.N.NO</th>
                             <th width="45">PKT</th>
-                            <th width="90">FROM</th>
-                            <th width="90">DESTINATION</th>
+                            <th width="180">FROM</th>
+                            <th width="130">DESTINATION</th>
                             <th width="140">CONSIGNEE</th>
                             <th width="100">ITEMS</th>
                             <th width="80">INV.NO</th>
@@ -606,21 +608,19 @@
                                     <td>
                                         <input type="text" class="grid-input text-center font-bold" name="items[{{ $index }}][bilty_no]" value="{{ $item->bilty_no }}" readonly style="width: 58px; background: #e8e8e8; cursor: not-allowed;" title="C.N. No cannot be changed">
                                     </td>
-                                    <td class="col-third-party-cn">
-                                        <input type="text" class="grid-input text-center" name="items[{{ $index }}][cn_no]" value="{{ $item->cn_no }}" style="width: 85px;">
-                                    </td>
+
                                     <td>
                                         <input type="number" class="grid-input text-center" name="items[{{ $index }}][packages]" value="{{ $item->packages }}" style="width: 42px;" oninput="onUnitCatOrRateOrPktChange({{ $index }})">
                                     </td>
                                     <td>
                                         <div class="autocomplete-grid-wrap">
-                                            <input type="text" class="grid-input text-left auto-grid-input" name="items[{{ $index }}][from_location]" value="{{ $item->from_location }}" data-original="{{ $item->from_location }}" data-type="location" style="width: 82px;" autocomplete="off">
+                                            <input type="text" class="grid-input text-left auto-grid-input" name="items[{{ $index }}][from_location]" value="{{ $item->from_location }}" data-original="{{ $item->from_location }}" data-type="location" style="width: 170px;" autocomplete="off">
                                             <div class="auto-grid-dropdown"></div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="autocomplete-grid-wrap">
-                                            <input type="text" class="grid-input text-left auto-grid-input" name="items[{{ $index }}][to_location]" value="{{ $item->to_location }}" data-original="{{ $item->to_location }}" data-type="location" style="width: 82px;" autocomplete="off">
+                                            <input type="text" class="grid-input text-left auto-grid-input" name="items[{{ $index }}][to_location]" value="{{ $item->to_location }}" data-original="{{ $item->to_location }}" data-type="location" style="width: 120px;" autocomplete="off">
                                             <div class="auto-grid-dropdown"></div>
                                         </div>
                                     </td>
@@ -1001,6 +1001,10 @@
 
         const totalAmtInput = document.getElementById('total_amount');
         if (totalAmtInput) totalAmtInput.value = totalAmount > 0 ? (Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2)) : '0';
+
+        if (typeof window.autoFitAllGridInputs === 'function') {
+            window.autoFitAllGridInputs();
+        }
     };
     function recalculateTotals() { window.recalculateTotals(); }
 
@@ -1083,21 +1087,19 @@
                     <td>
                         <input type="text" class="grid-input text-center font-bold" name="items[${index}][bilty_no]" value="${row.bilty_no || ''}" readonly style="width: 58px; background: #e8e8e8; cursor: not-allowed;" title="C.N. No cannot be changed">
                     </td>
-                    <td class="col-third-party-cn">
-                        <input type="text" class="grid-input text-center" name="items[${index}][cn_no]" value="${row.cn_no || ''}" style="width: 85px;">
-                    </td>
+
                     <td>
                         <input type="number" class="grid-input text-center" name="items[${index}][packages]" value="${row.packages || ''}" placeholder="0" style="width: 42px;" oninput="onUnitCatOrRateOrPktChange(${index})">
                     </td>
                     <td>
                         <div class="autocomplete-grid-wrap">
-                            <input type="text" class="grid-input text-left auto-grid-input" name="items[${index}][from_location]" value="${row.from_location || ''}" data-original="${row.from_location || ''}" data-type="location" style="width: 82px;" autocomplete="off">
+                            <input type="text" class="grid-input text-left auto-grid-input" name="items[${index}][from_location]" value="${row.from_location || ''}" data-original="${row.from_location || ''}" data-type="location" style="width: 170px;" autocomplete="off">
                             <div class="auto-grid-dropdown"></div>
                         </div>
                     </td>
                     <td>
                         <div class="autocomplete-grid-wrap">
-                            <input type="text" class="grid-input text-left auto-grid-input" name="items[${index}][to_location]" value="${row.to_location || ''}" data-original="${row.to_location || ''}" data-type="location" style="width: 82px;" autocomplete="off">
+                            <input type="text" class="grid-input text-left auto-grid-input" name="items[${index}][to_location]" value="${row.to_location || ''}" data-original="${row.to_location || ''}" data-type="location" style="width: 120px;" autocomplete="off">
                             <div class="auto-grid-dropdown"></div>
                         </div>
                     </td>
@@ -1156,6 +1158,9 @@
         window.recalculateTotals();
         if (typeof window.attachGridAutocomplete === 'function') {
             window.attachGridAutocomplete();
+        }
+        if (typeof window.autoFitAllGridInputs === 'function') {
+            setTimeout(window.autoFitAllGridInputs, 50);
         }
     };
 
@@ -1425,19 +1430,9 @@
     };
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Live Time Ticker
-        function updateLiveTime() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const timeEl = document.getElementById('live_time_display');
-            if (timeEl) {
-                timeEl.value = `${hours}:${minutes}:${seconds}`;
-            }
+        if (typeof window.autoFitAllGridInputs === 'function') {
+            setTimeout(window.autoFitAllGridInputs, 150);
         }
-        updateLiveTime();
-        setInterval(updateLiveTime, 1000);
 
         // Initial sync of month parties & destinations & items
         const monthSelect = document.getElementById('for_month');
@@ -1763,6 +1758,15 @@
         recalculateTotals();
     };
 
+    function fmtCalcVal(val) {
+        if (val === null || val === undefined || isNaN(val) || val <= 0) return '';
+        const num = Math.round((val + Number.EPSILON) * 100) / 100;
+        if (Number.isInteger(num)) {
+            return num.toLocaleString('fullwide', { useGrouping: false });
+        }
+        return num.toFixed(2);
+    }
+
     // When Weight, Unit Cat., Rate, or Pkt changes on a single row
     window.onUnitCatOrRateOrPktChange = function(index) {
         const weight = parseFloat(document.getElementById(`weight_${index}`)?.value) || 0;
@@ -1775,14 +1779,14 @@
         const frInput = document.getElementById(`freight_amount_${index}`);
         if (frInput) {
             const frAmt = (unit === 'KG') ? (weight * rate) : (pkts * rate);
-            frInput.value = frAmt > 0 ? (Number.isInteger(frAmt) ? frAmt : frAmt.toFixed(2)) : '';
+            frInput.value = fmtCalcVal(frAmt);
         }
 
         // Auto compute unload amount if unload_rate > 0
         if (unloadRate > 0) {
             const uAmt = (weight * unloadRate);
             const uAmtInput = document.getElementById(`unload_amount_${index}`);
-            if (uAmtInput) uAmtInput.value = uAmt > 0 ? (Number.isInteger(uAmt) ? uAmt : uAmt.toFixed(2)) : '';
+            if (uAmtInput) uAmtInput.value = fmtCalcVal(uAmt);
         }
 
         recalculateRowTotal(index);
@@ -2018,7 +2022,7 @@
         const total = frAmt + stCh + othCh + odaCh + unloadAmt;
         const amtInput = document.getElementById(`row_amount_input_${index}`);
         if (amtInput) {
-            amtInput.value = total > 0 ? (Number.isInteger(total) ? total : total.toFixed(2)) : '';
+            amtInput.value = fmtCalcVal(total);
         }
         
         window.recalculateTotals();

@@ -1014,7 +1014,6 @@
                                 <tr>
                                     <td class="text-center">{{ $item->bilty_date ? $item->bilty_date->format('j-m-Y') : '' }}</td>
                                     <td class="text-center font-bold">{{ $item->bilty_no }}</td>
-                                    <td class="text-center">{{ $item->cn_no }}</td>
                                     <td class="text-center">{{ $item->packages }}</td>
                                     <td class="text-left" style="text-transform: uppercase;">{{ $item->from_location }}</td>
                                     <td class="text-left" style="text-transform: uppercase;">{{ $item->to_location }}</td>
@@ -1160,7 +1159,6 @@
                                 <tr>
                                     <td class="text-center">{{ $item->bilty_date ? $item->bilty_date->format('d-m-Y') : '' }}</td>
                                     <td class="text-center font-bold">{{ $item->bilty_no }}</td>
-                                    <td class="text-center">{{ $item->cn_no }}</td>
                                     <td class="text-center">{{ $item->packages }}</td>
                                     <td class="text-left" style="text-transform: uppercase;">{{ $item->from_location }}</td>
                                     <td class="text-left" style="text-transform: uppercase;">{{ $item->to_location }}</td>
