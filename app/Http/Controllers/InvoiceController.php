@@ -812,6 +812,12 @@ class InvoiceController extends Controller
             $existing = Invoice::where('series', $series)->where('invoice_no', $invoiceNo)->first();
             if ($existing) {
                 DB::rollBack();
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Invoice #{$series}-{$invoiceNo} already exists. Please choose a unique Invoice No."
+                    ], 422);
+                }
                 return back()->with('error', "Invoice #{$series}-{$invoiceNo} already exists. Please choose a unique Invoice No.")->withInput();
             }
 
@@ -1008,6 +1014,22 @@ class InvoiceController extends Controller
 
             DB::commit();
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'invoice_id' => $invoice->id,
+                    'invoice_no' => $invoice->invoice_no,
+                    'series' => $invoice->series,
+                    'status' => $invoice->status,
+                    'bill_amount' => (float)$invoice->bill_amount,
+                    'gst_amount' => (float)$invoice->gst_amount,
+                    'total_amount' => (float)$invoice->total_amount,
+                    'message' => 'Saved automatically as ' . ucfirst($invoice->status),
+                    'update_url' => route('invoice.update', $invoice->id),
+                    'edit_url' => route('invoice.edit', $invoice->id),
+                ]);
+            }
+
             if ($request->boolean('save_and_print') || $request->filled('save_and_print')) {
                 return redirect()->route('invoice.print', $invoice->id);
             }
@@ -1019,6 +1041,12 @@ class InvoiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error saving Invoice: ' . $e->getMessage()
+                ], 422);
+            }
             return back()->with('error', 'Error saving Invoice: ' . $e->getMessage())->withInput();
         }
     }
@@ -1048,6 +1076,12 @@ class InvoiceController extends Controller
             $existing = Invoice::where('series', $series)->where('invoice_no', $invoiceNo)->where('id', '!=', $invoice->id)->first();
             if ($existing) {
                 DB::rollBack();
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Invoice #{$series}-{$invoiceNo} already exists. Please choose a unique Invoice No."
+                    ], 422);
+                }
                 return back()->with('error', "Invoice #{$series}-{$invoiceNo} already exists. Please choose a unique Invoice No.")->withInput();
             }
 
@@ -1218,6 +1252,22 @@ class InvoiceController extends Controller
 
             DB::commit();
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'invoice_id' => $invoice->id,
+                    'invoice_no' => $invoice->invoice_no,
+                    'series' => $invoice->series,
+                    'status' => $invoice->status,
+                    'bill_amount' => (float)$invoice->bill_amount,
+                    'gst_amount' => (float)$invoice->gst_amount,
+                    'total_amount' => (float)$invoice->total_amount,
+                    'message' => 'Updated automatically as ' . ucfirst($invoice->status),
+                    'update_url' => route('invoice.update', $invoice->id),
+                    'edit_url' => route('invoice.edit', $invoice->id),
+                ]);
+            }
+
             if ($request->boolean('save_and_print') || $request->filled('save_and_print')) {
                 return redirect()->route('invoice.print', $invoice->id);
             }
@@ -1229,6 +1279,12 @@ class InvoiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating Invoice: ' . $e->getMessage()
+                ], 422);
+            }
             return back()->with('error', 'Error updating Invoice: ' . $e->getMessage())->withInput();
         }
     }
@@ -1609,6 +1665,12 @@ class InvoiceController extends Controller
             $sheet->getStyle('K' . $rowNum . ':O' . $rowNum)->getNumberFormat()->setFormatCode('#,##0.00');
 
             $sheet->getStyle('A' . $rowNum . ':Q' . $rowNum)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D0D0D0');
+
+            if ($inv->status === 'draft') {
+                $sheet->getStyle('A' . $rowNum . ':Q' . $rowNum)->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB('FEF08A');
+            }
 
             $rowNum++;
         }

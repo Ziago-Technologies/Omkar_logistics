@@ -182,15 +182,32 @@
     }
 
     .register-data-table tr.data-row:hover {
-        background-color: #ffffd0 !important;
+        background-color: #f0f7ff !important;
     }
 
-    .register-data-table tr.data-row.selected-row {
-        background-color: #3399ff !important;
-        color: #ffffff !important;
+    /* Distinct Yellow Highlight for Draft entries */
+    .register-data-table tr.draft-row,
+    .register-data-table tr.draft-row:nth-child(even),
+    .register-data-table tr.draft-row td {
+        background-color: #fef08a !important;
+        color: #000000 !important;
     }
-    .register-data-table tr.data-row.selected-row td {
-        color: #ffffff !important;
+
+    .register-data-table tr.draft-row:hover,
+    .register-data-table tr.draft-row:hover td {
+        background-color: #fde047 !important;
+        color: #000000 !important;
+    }
+
+    .register-data-table tr.data-row.active-row td {
+        background-color: #dbeafe !important;
+        color: #1e3a8a !important;
+    }
+
+    .register-data-table tr.draft-row.active-row td {
+        background-color: #fde047 !important;
+        color: #000000 !important;
+        outline: 1.5px solid #d97706;
     }
 
     .text-center { text-align: center; }
@@ -445,8 +462,9 @@
                             $igst = ($inv->is_igst && $gstAmt > 0) ? $gstAmt : 0;
                             $netAmt = (float)$inv->total_amount;
                             $dueAmt = (float)$inv->total_amount;
+                            $isDraft = ($inv->status === 'draft');
                         @endphp
-                        <tr class="data-row selected-row" onclick="selectRegisterRow(event, this)" ondblclick="window.location.href='{{ route('invoice.edit', $inv->id) }}'" title="Double click to edit Invoice #{{ $inv->series }}-{{ $inv->invoice_no }}">
+                        <tr class="data-row {{ $isDraft ? 'draft-row' : '' }}" onclick="selectRegisterRow(event, this)" ondblclick="window.location.href='{{ route('invoice.edit', $inv->id) }}'" title="Double click to edit Invoice #{{ $inv->series }}-{{ $inv->invoice_no }} {{ $isDraft ? '[DRAFT]' : '' }}">
                             <td class="text-center" onclick="event.stopPropagation();">
                                 <input type="checkbox" class="row-checkbox" value="{{ $inv->id }}" checked onchange="toggleRowSelection(this)">
                             </td>
@@ -456,10 +474,10 @@
                                 <a href="{{ route('invoice.edit', $inv->id) }}" style="color: #0044cc; text-decoration: underline; font-weight: bold;" title="Edit Invoice #{{ $inv->series }}-{{ $inv->invoice_no }}">
                                     {{ $inv->invoice_no }}
                                 </a>
-                                @if($inv->status === 'draft')
-                                    <span style="background: #f59e0b; color: #fff; font-size: 9px; padding: 1px 4px; border-radius: 2px; margin-left: 2px; font-weight: normal;" title="Saved as Draft">Draft</span>
+                                @if($isDraft)
+                                    <span style="background: #fffbeb; color: #92400e; border: 1px solid #d97706; font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 4px; font-weight: 800; display: inline-block; white-space: nowrap;" title="Saved as Draft">Draft</span>
                                 @elseif($inv->status === 'cancelled')
-                                    <span style="background: #ef4444; color: #fff; font-size: 9px; padding: 1px 4px; border-radius: 2px; margin-left: 2px; font-weight: normal;" title="Cancelled Invoice">Cancelled</span>
+                                    <span style="background: #fef2f2; color: #b91c1c; border: 1px solid #ef4444; font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 4px; font-weight: 800; display: inline-block; white-space: nowrap;" title="Cancelled Invoice">Cancelled</span>
                                 @endif
                             </td>
                             <td class="text-center">{{ $inv->invoice_date ? $inv->invoice_date->format('d-m-Y') : '' }}</td>
@@ -571,19 +589,11 @@
         if (event && (event.target.type === 'checkbox' || event.target.tagName === 'A')) {
             return;
         }
-        document.querySelectorAll('#partyRegisterTable tr.data-row').forEach(r => r.classList.remove('selected-row'));
-        row.classList.add('selected-row');
+        document.querySelectorAll('#partyRegisterTable tr.data-row').forEach(r => r.classList.remove('active-row'));
+        row.classList.add('active-row');
     }
 
     function toggleRowSelection(checkbox) {
-        const tr = checkbox.closest('tr');
-        if (tr) {
-            if (checkbox.checked) {
-                tr.classList.add('selected-row');
-            } else {
-                tr.classList.remove('selected-row');
-            }
-        }
         recalculateRegisterTotals();
     }
 
@@ -594,11 +604,6 @@
                 const isChecked = this.checked;
                 document.querySelectorAll('.row-checkbox').forEach(cb => {
                     cb.checked = isChecked;
-                    const tr = cb.closest('tr');
-                    if (tr) {
-                        if (isChecked) tr.classList.add('selected-row');
-                        else tr.classList.remove('selected-row');
-                    }
                 });
                 recalculateRegisterTotals();
             });

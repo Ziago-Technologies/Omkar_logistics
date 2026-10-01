@@ -410,6 +410,15 @@
     .select2-container--default .select2-selection--single .select2-selection__arrow {
         height: 26px !important;
     }
+
+    /* Ensure SweetAlert2 is always on top of EVERYTHING */
+    .swal2-container {
+        z-index: 99999999 !important;
+    }
+    .swal2-popup {
+        z-index: 99999999 !important;
+        font-family: inherit !important;
+    }
 </style>
 @endsection
 
@@ -450,17 +459,6 @@
 
                 <div class="header-center-title" id="headerTitle">
                     INVOICE
-                    <span id="invoice_status_badge">
-                        @if(($isEdit ?? false) && isset($existingInvoice))
-                            @if($existingInvoice->status === 'draft')
-                                <span style="font-size: 11px; vertical-align: middle; background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 3px; text-shadow: none; font-weight: normal; margin-left: 8px;">DRAFT</span>
-                            @elseif($existingInvoice->status === 'cancelled')
-                                <span style="font-size: 11px; vertical-align: middle; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 3px; text-shadow: none; font-weight: normal; margin-left: 8px;">CANCELLED</span>
-                            @else
-                                <span style="font-size: 11px; vertical-align: middle; background: #10b981; color: #fff; padding: 2px 8px; border-radius: 3px; text-shadow: none; font-weight: normal; margin-left: 8px;">FINALIZED</span>
-                            @endif
-                        @endif
-                    </span>
                 </div>
 
                 <div class="header-right-group">
@@ -714,6 +712,12 @@
                             <label for="total_amount">TOTAL AMT.</label>
                             <input type="text" name="total_amount" id="total_amount" value="{{ (isset($existingInvoice) && $existingInvoice->total_amount > 0) ? (float)$existingInvoice->total_amount : '0' }}" placeholder="0" readonly style="width: 110px; font-weight: bold; color: #8b0000; background: #ffffd0; text-align: right;">
                         </div>
+
+                        <!-- Auto-Save Status Indicator placed at right of TOTAL AMT. -->
+                        <span id="autosave_status_indicator" style="font-size: 11.5px; font-weight: 600; margin-left: 14px; padding: 3px 12px; border-radius: 14px; display: inline-flex; align-items: center; gap: 5px; text-shadow: none; transition: all 0.3s ease; opacity: 0; pointer-events: none; border: 1px solid transparent; background: #dcfce7; color: #166534;">
+                            <span class="autosave-icon" style="font-weight: bold;">✓</span>
+                            <span class="autosave-text" style="font-size: 11px;">All changes saved</span>
+                        </span>
                     </div>
                 </div>
 
@@ -736,11 +740,11 @@
                         <button type="button" class="btn-desktop-cyan" onclick="window.location.href='{{ route('invoice.create') }}';" title="New Invoice">
                             NEW
                         </button>
-                        <button type="button" class="btn-desktop-cyan" id="btnSaveInvoice" onclick="submitInvoiceWithStatus('finalized');" title="{{ ($isEdit ?? false) ? 'Update Invoice as Finalized' : 'Save Invoice as Finalized' }}">
-                            {{ ($isEdit ?? false) ? 'UPDATE' : 'SAVE' }}
-                        </button>
-                        <button type="button" class="btn-desktop-cyan" id="btnDraftInvoice" onclick="submitInvoiceWithStatus('draft');" style="background: linear-gradient(to bottom, #fff8db 0%, #fae69e 50%, #f7d768 100%); border-color: #d4a017;" title="Save as Draft">
+                        <button type="button" class="btn-desktop-cyan" id="btnDraftInvoice" onclick="submitInvoiceWithStatus('draft');" style="background: linear-gradient(to bottom, #fff8db 0%, #fae69e 50%, #f7d768 100%); border-color: #d4a017; font-weight: bold;" title="Save as Draft">
                             DRAFT
+                        </button>
+                        <button type="button" class="btn-desktop-cyan" id="btnGenerateInvoice" onclick="submitInvoiceWithStatus('finalized');" style="font-weight: bold;" title="Save Invoice">
+                            SAVE
                         </button>
                         <button type="button" class="btn-desktop-cyan" id="btnPrintInvoice" onclick="handlePrintBtn();" title="Print Invoice">
                             PRINT
@@ -1005,6 +1009,10 @@
         if (typeof window.autoFitAllGridInputs === 'function') {
             window.autoFitAllGridInputs();
         }
+
+        if (typeof window.triggerAutoSave === 'function') {
+            window.triggerAutoSave(600);
+        }
     };
     function recalculateTotals() { window.recalculateTotals(); }
 
@@ -1030,16 +1038,194 @@
     };
     function toggleGstBill() { window.toggleGstBill(); }
 
+    // Real-Time Auto-Save Engine (Excel / Google Sheets Style)
+    let autoSaveTimer = null;
+    let isAutoSaving = false;
+    let autoSaveQueued = false;
+    let queuedExplicitStatus = null;
+
+    function updateAutoSaveIndicator(state, message = '') {
+        const ind = document.getElementById('autosave_status_indicator');
+        if (!ind) return;
+        
+        ind.style.opacity = '1';
+        const iconEl = ind.querySelector('.autosave-icon');
+        const textEl = ind.querySelector('.autosave-text');
+
+        if (state === 'saving') {
+            ind.style.background = '#fef3c7';
+            ind.style.color = '#92400e';
+            ind.style.borderColor = '#fde68a';
+            if (iconEl) iconEl.textContent = '⏳';
+            if (textEl) textEl.textContent = message || 'Saving to database...';
+        } else if (state === 'saved') {
+            ind.style.background = '#dcfce7';
+            ind.style.color = '#166534';
+            ind.style.borderColor = '#86efac';
+            if (iconEl) iconEl.textContent = '✓';
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            if (textEl) textEl.textContent = message || `All changes saved (${timeStr})`;
+            
+            setTimeout(() => {
+                if (ind && ind.dataset.state === 'saved') {
+                    ind.style.opacity = '0.7';
+                }
+            }, 3000);
+        } else if (state === 'error') {
+            ind.style.background = '#fee2e2';
+            ind.style.color = '#991b1b';
+            ind.style.borderColor = '#fca5a5';
+            if (iconEl) iconEl.textContent = '⚠️';
+            if (textEl) textEl.textContent = message || 'Auto-save failed';
+        }
+        ind.dataset.state = state;
+    }
+
+    window.triggerAutoSave = function(debounceMs = 600, explicitStatus = null) {
+        if (explicitStatus) {
+            queuedExplicitStatus = explicitStatus;
+        }
+
+        if (autoSaveTimer) {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = null;
+        }
+
+        if (debounceMs <= 0) {
+            window.executeAutoSave();
+        } else {
+            updateAutoSaveIndicator('saving', 'Saving changes...');
+            autoSaveTimer = setTimeout(() => {
+                window.executeAutoSave();
+            }, debounceMs);
+        }
+    };
+
+    window.executeAutoSave = function(explicitStatusOverride = null, isUserClick = false) {
+        const form = document.getElementById('invoiceForm');
+        if (!form) return;
+
+        const targetStatus = explicitStatusOverride || queuedExplicitStatus || document.getElementById('invoice_status')?.value || 'draft';
+        queuedExplicitStatus = null;
+
+        const accountSelect = document.getElementById('account_name_select');
+        const accountName = accountSelect ? accountSelect.value.trim() : '';
+        const rows = document.querySelectorAll('#partyBillTableBody tr.selected-row');
+
+        if (!accountName || rows.length === 0) {
+            return;
+        }
+
+        if (isAutoSaving) {
+            autoSaveQueued = true;
+            return;
+        }
+
+        isAutoSaving = true;
+        updateAutoSaveIndicator('saving', 'Saving to database...');
+
+        const statusInput = document.getElementById('invoice_status');
+        if (statusInput) statusInput.value = targetStatus;
+
+        const formData = new FormData(form);
+        const existingIdInput = document.getElementById('existing_invoice_id');
+        const existingId = existingIdInput ? existingIdInput.value : '';
+
+        let targetUrl = form.action;
+        if (existingId) {
+            formData.set('_method', 'PUT');
+            targetUrl = `{{ url('/invoice/update') }}/${existingId}`;
+        } else {
+            formData.delete('_method');
+            targetUrl = `{{ route('invoice.store') }}`;
+        }
+
+        fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => { throw new Error(errData.message || 'Server error ' + response.status); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            isAutoSaving = false;
+            if (data.success) {
+                if (data.invoice_id) {
+                    if (existingIdInput) existingIdInput.value = data.invoice_id;
+                    form.action = data.update_url || `{{ url('/invoice/update') }}/${data.invoice_id}`;
+                    if (data.edit_url && window.location.pathname !== `/invoice/edit/${data.invoice_id}`) {
+                        window.history.replaceState({}, '', data.edit_url);
+                    }
+                }
+
+                const voucherDisplay = document.getElementById('voucher_no_display');
+                if (voucherDisplay && data.invoice_no) {
+                    voucherDisplay.value = data.invoice_no;
+                }
+
+                const generateBtn = document.getElementById('btnGenerateInvoice');
+                if (generateBtn) {
+                    generateBtn.textContent = 'SAVE';
+                    generateBtn.title = 'Save Invoice';
+                }
+
+                updateAutoSaveIndicator('saved', `All changes saved`);
+
+                if (isUserClick) {
+                    Swal.fire({
+                        title: data.status === 'draft' ? 'Saved as Draft!' : 'Invoice Saved!',
+                        text: `Invoice #${data.series || ''}-${data.invoice_no || ''} saved successfully!`,
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: '🖨 Print Invoice Now',
+                        cancelButtonText: 'Continue Editing',
+                        confirmButtonColor: '#0f3460',
+                        cancelButtonColor: '#64748b'
+                    }).then((result) => {
+                        if (result.isConfirmed && (data.invoice_id || existingId)) {
+                            window.open(`{{ url('/invoice/print') }}/${data.invoice_id || existingId}`, '_blank');
+                        }
+                    });
+                }
+            } else {
+                updateAutoSaveIndicator('error', data.message || 'Auto-save failed');
+            }
+
+            if (autoSaveQueued) {
+                autoSaveQueued = false;
+                setTimeout(() => window.executeAutoSave(), 200);
+            }
+        })
+        .catch(err => {
+            isAutoSaving = false;
+            console.error('AutoSave error:', err);
+            updateAutoSaveIndicator('error', err.message || 'Auto-save failed');
+            if (isUserClick) {
+                Swal.fire({
+                    title: 'Save Failed',
+                    text: err.message || 'An error occurred while saving invoice.',
+                    icon: 'error',
+                    confirmButtonColor: '#0f3460'
+                });
+            }
+        });
+    };
+
     // Helper: Submit form with specific status ('draft' or 'finalized')
     window.submitInvoiceWithStatus = function(status) {
         const statusInput = document.getElementById('invoice_status');
         if (statusInput) {
             statusInput.value = status;
         }
-        const form = document.getElementById('invoiceForm');
-        if (form) {
-            form.requestSubmit();
-        }
+        window.executeAutoSave(status, true);
     };
 
     // Global Render Function for Table Rows (Used by Lookup and FetchPendingBilties)
@@ -1242,23 +1428,11 @@
             statusInput.value = inv.status || 'finalized';
         }
 
-        // Status Badge
-        const badgeContainer = document.getElementById('invoice_status_badge');
-        if (badgeContainer) {
-            if (inv.status === 'draft') {
-                badgeContainer.innerHTML = `<span style="font-size: 11px; vertical-align: middle; background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 3px; text-shadow: none; font-weight: normal; margin-left: 8px;">DRAFT</span>`;
-            } else if (inv.status === 'cancelled') {
-                badgeContainer.innerHTML = `<span style="font-size: 11px; vertical-align: middle; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 3px; text-shadow: none; font-weight: normal; margin-left: 8px;">CANCELLED</span>`;
-            } else {
-                badgeContainer.innerHTML = `<span style="font-size: 11px; vertical-align: middle; background: #10b981; color: #fff; padding: 2px 8px; border-radius: 3px; text-shadow: none; font-weight: normal; margin-left: 8px;">FINALIZED</span>`;
-            }
-        }
-
         // Action Buttons
-        const saveBtn = document.getElementById('btnSaveInvoice');
-        if (saveBtn) {
-            saveBtn.textContent = inv.status === 'draft' ? 'Finalize & Save' : 'Update';
-            saveBtn.title = 'Update Invoice';
+        const generateBtn = document.getElementById('btnGenerateInvoice');
+        if (generateBtn) {
+            generateBtn.textContent = 'SAVE';
+            generateBtn.title = 'Save Invoice';
         }
         const cancelBtn = document.getElementById('btnCancelInvoice');
         if (cancelBtn) {
@@ -1367,17 +1541,11 @@
             statusInput.value = 'finalized';
         }
 
-        // Status Badge
-        const badgeContainer = document.getElementById('invoice_status_badge');
-        if (badgeContainer) {
-            badgeContainer.innerHTML = '';
-        }
-
         // Action Buttons
-        const saveBtn = document.getElementById('btnSaveInvoice');
-        if (saveBtn) {
-            saveBtn.textContent = 'Save';
-            saveBtn.title = 'Save Invoice as Finalized';
+        const generateBtn = document.getElementById('btnGenerateInvoice');
+        if (generateBtn) {
+            generateBtn.textContent = 'SAVE';
+            generateBtn.title = 'Save Invoice';
         }
         const cancelBtn = document.getElementById('btnCancelInvoice');
         if (cancelBtn) {
@@ -1654,6 +1822,27 @@
                 }
             });
         }
+
+        // Global Table Event Delegation for AutoSave on ANY cell input / select change
+        const partyTable = document.getElementById('partyBillTable');
+        if (partyTable) {
+            partyTable.addEventListener('input', function(e) {
+                window.triggerAutoSave(500);
+            });
+            partyTable.addEventListener('change', function(e) {
+                window.triggerAutoSave(0);
+            });
+        }
+
+        // Header inputs AutoSave
+        const autoSaveHeaderIds = ['invoice_date', 'series', 'invoice_no', 'account_name_select', 'consignor_select', 'for_month', 'item_filter', 'destination_filter', 'is_gst_bill', 'is_igst', 'gst_percent', 'remark'];
+        autoSaveHeaderIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => window.triggerAutoSave(500));
+                el.addEventListener('change', () => window.triggerAutoSave(0));
+            }
+        });
 
         // Automatic SweetAlert on save with Print Invoice button
         @if(session('print_invoice_id'))

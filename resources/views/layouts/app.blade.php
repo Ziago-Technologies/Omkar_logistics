@@ -662,6 +662,12 @@
         }
 
         /* SysDialog Global Popup Modal Styles */
+        .swal2-container {
+            z-index: 99999999 !important;
+        }
+        .swal2-popup {
+            z-index: 99999999 !important;
+        }
         .sys-dialog-overlay {
             position: fixed;
             top: 0;
