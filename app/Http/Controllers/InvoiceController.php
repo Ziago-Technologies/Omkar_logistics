@@ -69,6 +69,15 @@ class InvoiceController extends Controller
             ->orderBy('description')
             ->pluck('description');
 
+        // 4b. Distinct Units for Unit filter
+        $units = \App\Models\MeasurementUnit::pluck('unit_code')
+            ->merge(BiltyItem::select('unit')->whereNotNull('unit')->where('unit', '!=', '')->pluck('unit'))
+            ->filter()
+            ->map(fn($v) => strtoupper(trim($v)))
+            ->unique()
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
         // 5. Build monthPartiesMap, party destinations, and party items for all unbilled bilties (TBB only)
         $allUnbilledBilties = Bilty::with(['consignor', 'billingParty', 'toLocation', 'toCity', 'items'])
             ->tbb()
@@ -235,6 +244,7 @@ class InvoiceController extends Controller
             'consignors',
             'pendingParties',
             'itemDescriptions',
+            'units',
             'destinations',
             'months',
             'selectedMonth',
@@ -272,6 +282,15 @@ class InvoiceController extends Controller
             ->distinct()
             ->orderBy('description')
             ->pluck('description');
+
+        // Distinct Units for Unit filter
+        $units = \App\Models\MeasurementUnit::pluck('unit_code')
+            ->merge(BiltyItem::select('unit')->whereNotNull('unit')->where('unit', '!=', '')->pluck('unit'))
+            ->filter()
+            ->map(fn($v) => strtoupper(trim($v)))
+            ->unique()
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
 
         // Build monthPartiesMap for unbilled bilties (TBB only) PLUS any bilties attached to this invoice
         $allBilties = Bilty::with(['consignor', 'billingParty', 'toLocation', 'toCity', 'items'])
@@ -445,6 +464,7 @@ class InvoiceController extends Controller
             'consignors',
             'pendingParties',
             'itemDescriptions',
+            'units',
             'destinations',
             'months',
             'selectedMonth',
@@ -620,6 +640,7 @@ class InvoiceController extends Controller
             'is_gst_bill' => (bool)$invoice->is_gst_bill,
             'is_igst' => (bool)$invoice->is_igst,
             'destination_filter' => $invoice->destination_filter ?? '',
+            'unit_filter' => $invoice->unit_filter ?? '',
             'bill_amount' => number_format((float)$invoice->bill_amount, 2, '.', ''),
             'gst_percent' => number_format((float)$invoice->gst_percent, 2, '.', ''),
             'gst_amount' => number_format((float)$invoice->gst_amount, 2, '.', ''),
@@ -723,6 +744,19 @@ class InvoiceController extends Controller
             $itemDesc = trim($request->item_description);
             $query->whereHas('items', function($sq) use ($itemDesc) {
                 $sq->where('description', 'like', '%' . $itemDesc . '%');
+            });
+        }
+
+        // Filter by Unit Category
+        if ($request->filled('unit_filter')) {
+            $unitVal = strtoupper(trim($request->unit_filter));
+            $query->whereHas('items', function($sq) use ($unitVal) {
+                $sq->where(DB::raw('UPPER(unit)'), $unitVal);
+            });
+        } elseif ($request->filled('unit')) {
+            $unitVal = strtoupper(trim($request->unit));
+            $query->whereHas('items', function($sq) use ($unitVal) {
+                $sq->where(DB::raw('UPPER(unit)'), $unitVal);
             });
         }
 
@@ -848,6 +882,7 @@ class InvoiceController extends Controller
                 'is_gst_bill' => $request->boolean('is_gst_bill'),
                 'is_igst' => $request->boolean('is_igst'),
                 'destination_filter' => $request->destination_filter,
+                'unit_filter' => $request->unit_filter,
                 'bill_amount' => $billAmount,
                 'gst_percent' => $gstPercent,
                 'gst_amount' => $gstAmount,
@@ -1111,6 +1146,7 @@ class InvoiceController extends Controller
                 'is_gst_bill' => $request->boolean('is_gst_bill'),
                 'is_igst' => $request->boolean('is_igst'),
                 'destination_filter' => $request->destination_filter,
+                'unit_filter' => $request->unit_filter,
                 'bill_amount' => $billAmount,
                 'gst_percent' => $gstPercent,
                 'gst_amount' => $gstAmount,

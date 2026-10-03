@@ -540,6 +540,17 @@
                         </select>
                     </div>
 
+                    <div class="ctrl-group">
+                        <label for="unit_filter">UNIT <span id="unit_count_badge" style="color: #0f3460; font-weight: normal; font-size: 10px;"></span></label>
+                        <select name="unit_filter" id="unit_filter" style="width: 110px; height: 22px; border: 1px solid #7f9db9; font-size: 11px; background: #fff; padding: 1px 3px;">
+                            <option value="">-- ALL UNITS --</option>
+                            @php $activeUnit = old('unit_filter', $existingInvoice->unit_filter ?? ''); @endphp
+                            @foreach ($units as $u)
+                                <option value="{{ $u }}" {{ $activeUnit == $u ? 'selected' : '' }}>{{ $u }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <div class="ctrl-group" style="margin-left: 10px;">
                         <input type="checkbox" name="is_gst_bill" id="is_gst_bill" value="1" {{ old('is_gst_bill', $existingInvoice->is_gst_bill ?? false) ? 'checked' : '' }} style="cursor: pointer;">
                         <label for="is_gst_bill" style="cursor: pointer;">GST BILL</label>
@@ -864,6 +875,57 @@
         }
     };
 
+    // Global function to update Unit dropdown based on selected month and party/account
+    window.updateUnitDropdown = function() {
+        const monthSelect = document.getElementById('for_month');
+        const monthVal = monthSelect ? monthSelect.value : '';
+        const key = (monthVal && monthVal !== '-- All Months --') ? monthVal : 'all';
+        const data = monthPartiesMap[key] || monthPartiesMap[monthVal] || monthPartiesMap['all'] || { units: [], party_units: {} };
+
+        const accountSelect = document.getElementById('account_name_select');
+        const accountVal = accountSelect ? accountSelect.value.trim() : '';
+        const consignorSelect = document.getElementById('consignor_select');
+        const consignorVal = consignorSelect ? consignorSelect.value.trim() : '';
+
+        const selectedParty = accountVal || consignorVal;
+
+        let unitList = [];
+        if (selectedParty && data.party_units && data.party_units[selectedParty]) {
+            unitList = data.party_units[selectedParty];
+        } else if (!selectedParty) {
+            unitList = data.units || [];
+        } else {
+            unitList = [];
+        }
+
+        const unitSelect = document.getElementById('unit_filter');
+        if (unitSelect) {
+            const prevVal = unitSelect.value;
+            const uCount = unitList.length;
+            let uHtml = `<option value="">-- All Units ${uCount > 0 ? '(' + uCount + ')' : ''} --</option>`;
+            if (unitList && unitList.length > 0) {
+                unitList.forEach(function(u) {
+                    uHtml += `<option value="${u}">${u}</option>`;
+                });
+            } else {
+                @foreach ($units as $u)
+                    uHtml += `<option value="{{ $u }}">{{ $u }}</option>`;
+                @endforeach
+            }
+            unitSelect.innerHTML = uHtml;
+            if (prevVal) {
+                unitSelect.value = prevVal;
+            } else {
+                unitSelect.value = '';
+            }
+        }
+
+        const uBadge = document.getElementById('unit_count_badge');
+        if (uBadge) {
+            uBadge.textContent = (unitList && unitList.length > 0) ? `(${unitList.length})` : '';
+        }
+    };
+
     // Global function to update Account, Consignor, Pending Parties, Destination, and Item dropdowns
     window.loadMonthParties = function(monthVal, autoFetchAfter = false) {
         const key = (monthVal && monthVal !== '-- All Months --') ? monthVal : 'all';
@@ -956,6 +1018,9 @@
 
         // 5. Update Item Dropdown
         window.updateItemDropdown();
+
+        // 6. Update Unit Dropdown
+        window.updateUnitDropdown();
 
         if (autoFetchAfter) {
             const accountVal = accountSelect ? accountSelect.value.trim() : '';
@@ -1491,9 +1556,12 @@
             consignorSelect.value = inv.consignor_name || '';
         }
 
-        // Item & Destination Filters
+        // Item & Unit & Destination Filters
         const itemSelect = document.getElementById('item_filter');
         if (itemSelect) itemSelect.value = inv.item_filter || '';
+
+        const unitSelect = document.getElementById('unit_filter');
+        if (unitSelect) unitSelect.value = inv.unit_filter || '';
 
         const destSelect = document.getElementById('destination_filter');
         if (destSelect) destSelect.value = inv.destination_filter || '';
@@ -1666,6 +1734,7 @@
                 }
                 window.updateDestinationDropdown();
                 window.updateItemDropdown();
+                window.updateUnitDropdown();
                 if (val) {
                     fetchPendingBilties();
                 }
@@ -1683,6 +1752,7 @@
                 }
                 window.updateDestinationDropdown();
                 window.updateItemDropdown();
+                window.updateUnitDropdown();
                 if (val || (accountSelect && accountSelect.value)) {
                     fetchPendingBilties();
                 }
@@ -1729,6 +1799,7 @@
                     }
                     window.updateDestinationDropdown();
                     window.updateItemDropdown();
+                    window.updateUnitDropdown();
                     fetchPendingBilties();
                 }
             });
@@ -1746,6 +1817,14 @@
         const itemSelect = document.getElementById('item_filter');
         if (itemSelect) {
             itemSelect.addEventListener('change', function() {
+                fetchPendingBilties();
+            });
+        }
+
+        // Unit filter change
+        const unitSelectElement = document.getElementById('unit_filter');
+        if (unitSelectElement) {
+            unitSelectElement.addEventListener('change', function() {
                 fetchPendingBilties();
             });
         }
@@ -1835,7 +1914,7 @@
         }
 
         // Header inputs AutoSave
-        const autoSaveHeaderIds = ['invoice_date', 'series', 'invoice_no', 'account_name_select', 'consignor_select', 'for_month', 'item_filter', 'destination_filter', 'is_gst_bill', 'is_igst', 'gst_percent', 'remark'];
+        const autoSaveHeaderIds = ['invoice_date', 'series', 'invoice_no', 'account_name_select', 'consignor_select', 'for_month', 'item_filter', 'unit_filter', 'destination_filter', 'is_gst_bill', 'is_igst', 'gst_percent', 'remark'];
         autoSaveHeaderIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -1885,6 +1964,8 @@
         const consignorName = consignorSelect ? consignorSelect.value.trim() : '';
         const forMonth = document.getElementById('for_month').value.trim();
         const itemFilter = document.getElementById('item_filter').value.trim();
+        const unitSelect = document.getElementById('unit_filter');
+        const unitFilter = unitSelect ? unitSelect.value.trim() : '';
         const destSelect = document.getElementById('destination_filter');
         const destFilter = destSelect ? destSelect.value.trim() : '';
 
@@ -1913,6 +1994,7 @@
             consignor_name: consignorName,
             for_month: forMonth,
             item_description: itemFilter,
+            unit_filter: unitFilter,
             destination: destFilter
         });
 

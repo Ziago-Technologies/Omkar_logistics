@@ -23,6 +23,7 @@ class Invoice extends Model
         'is_gst_bill',
         'is_igst',
         'destination_filter',
+        'unit_filter',
         'bill_amount',
         'gst_percent',
         'gst_amount',
