@@ -749,12 +749,8 @@
         $workingMonth = $invoice->invoice_date->format('M-Y');
     }
 
-    // Format Invoice No Display (e.g. GSTOML2627033 or A-40)
-    $displayInvoiceNo = $invoice->series 
-        ? (preg_match('/[A-Za-z]$/', $invoice->series) && is_numeric($invoice->invoice_no) && strlen((string)$invoice->invoice_no) > 4 
-            ? $invoice->series . $invoice->invoice_no 
-            : $invoice->series . '-' . $invoice->invoice_no)
-        : $invoice->invoice_no;
+    // Format Invoice No Display (e.g. GSTOML2627045)
+    $displayInvoiceNo = $invoice->formatted_invoice_no;
 
     // State Code & State Name Resolution
     $stateCodes = [

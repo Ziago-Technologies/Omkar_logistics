@@ -585,16 +585,17 @@ class InvoiceController extends Controller
     public function lookup(Request $request, $invoice_no)
     {
         $series = $request->query('series');
+        $parsedNo = Invoice::parseInvoiceNo($invoice_no);
         
         $query = Invoice::with(['items', 'account', 'consignor', 'user']);
         if ($series) {
             $query->where('series', $series);
         }
-        $invoice = $query->where('invoice_no', $invoice_no)->first();
+        $invoice = $query->where('invoice_no', $parsedNo)->first();
 
         // If not found with series, try finding just by invoice_no as fallback
         if (!$invoice && $series) {
-            $invoice = Invoice::with(['items', 'account', 'consignor', 'user'])->where('invoice_no', $invoice_no)->first();
+            $invoice = Invoice::with(['items', 'account', 'consignor', 'user'])->where('invoice_no', $parsedNo)->first();
         }
 
         if (!$invoice) {
@@ -631,7 +632,8 @@ class InvoiceController extends Controller
         $invoiceData = [
             'id' => $invoice->id,
             'series' => $invoice->series,
-            'invoice_no' => $invoice->invoice_no,
+            'invoice_no' => $invoice->formatted_invoice_no,
+            'raw_invoice_no' => $invoice->invoice_no,
             'invoice_date' => $invoice->invoice_date ? $invoice->invoice_date->format('Y-m-d') : '',
             'account_name' => $invoice->account_name,
             'consignor_name' => $invoice->consignor_name ?? '',
@@ -664,6 +666,128 @@ class InvoiceController extends Controller
     {
         $data = $this->extractPartiesForMonth($request->month);
         return response()->json($data);
+    }
+
+    /**
+     * AJAX API: Update a bilty item record directly in the database when edited in invoice grid.
+     */
+    public function updateBiltyItem(Request $request)
+    {
+        $biltyId = $request->input('bilty_id');
+        if (!$biltyId) {
+            return response()->json(['success' => false, 'message' => 'bilty_id required'], 400);
+        }
+
+        $bilty = Bilty::with('items')->find($biltyId);
+        if (!$bilty) {
+            return response()->json(['success' => false, 'message' => 'Bilty not found'], 404);
+        }
+
+        $item = $bilty->items->first();
+        if (!$item) {
+            $item = BiltyItem::create([
+                'bilty_id' => $bilty->id,
+                'description' => 'Goods',
+                'no_of_pkgs' => $bilty->total_packages ?: 1,
+                'weight_val' => (float)$bilty->total_qty,
+                'qty' => (float)$bilty->total_qty,
+                'unit' => 'KG',
+                'rate' => 0.00,
+            ]);
+        }
+
+        if ($request->has('rate')) {
+            $item->rate = (float)$request->input('rate');
+        }
+
+        if ($request->has('unload_rate')) {
+            $item->unload_rate = (float)$request->input('unload_rate');
+        }
+
+        if ($request->has('unload_amount')) {
+            $item->unload_amount = (float)$request->input('unload_amount');
+        }
+
+        if ($request->has('st_charge')) {
+            $bilty->st_charge = (float)$request->input('st_charge');
+            $item->st = (float)$request->input('st_charge');
+        }
+
+        if ($request->has('freight_amount')) {
+            $bilty->gross_amount = (float)$request->input('freight_amount');
+        }
+
+        if ($request->has('other_charges')) {
+            $bilty->rc_charge = (float)$request->input('other_charges');
+            $bilty->sc_charge = 0;
+            $item->rc = (float)$request->input('other_charges');
+        }
+
+        if ($request->has('oda_charge')) {
+            $bilty->dd_charge = (float)$request->input('oda_charge');
+            $item->dd = (float)$request->input('oda_charge');
+        }
+
+        if ($request->has('amount')) {
+            $bilty->net_amount = (float)$request->input('amount');
+        }
+
+        if ($request->has('packages')) {
+            $bilty->total_packages = (int)$request->input('packages');
+            $item->no_of_pkgs = (int)$request->input('packages');
+        }
+
+        if ($request->has('weight')) {
+            $bilty->total_qty = (float)$request->input('weight');
+            $item->weight_val = (float)$request->input('weight');
+            $item->qty = (float)$request->input('weight');
+        }
+
+        if ($request->has('weight_type')) {
+            $item->unit = strtoupper($request->input('weight_type'));
+        }
+
+        if ($request->has('item_description')) {
+            $item->description = $request->input('item_description');
+        }
+
+        if ($request->has('invoice_no_ref')) {
+            $item->invoice_no = $request->input('invoice_no_ref');
+        }
+
+        if ($request->has('from_location') && !empty($request->input('from_location'))) {
+            $fromName = trim($request->input('from_location'));
+            $loc = \App\Models\Location::where('name', $fromName)->first();
+            if ($loc) {
+                $bilty->from_location_id = $loc->id;
+            }
+        }
+
+        if ($request->has('to_location') && !empty($request->input('to_location'))) {
+            $toName = trim($request->input('to_location'));
+            $loc = \App\Models\Location::where('name', $toName)->first();
+            if ($loc) {
+                $bilty->to_location_id = $loc->id;
+            } else {
+                $city = \App\Models\CityModel::where('name', $toName)->first();
+                if ($city) {
+                    $bilty->to_city_id = $city->id;
+                }
+            }
+        }
+
+        if ($request->has('consignee_name') && !empty($request->input('consignee_name'))) {
+            $cName = trim($request->input('consignee_name'));
+            $con = \App\Models\AccountLedger::where('ledger_name', $cName)->first();
+            if ($con) {
+                $bilty->consignee_id = $con->id;
+            }
+        }
+
+        $item->save();
+        $bilty->save();
+
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -762,6 +886,11 @@ class InvoiceController extends Controller
 
         $bilties = $query->orderBy('invoice_date', 'asc')->orderBy('bilty_no', 'asc')->get();
 
+        $savedInvoiceItems = [];
+        if ($request->filled('invoice_id')) {
+            $savedInvoiceItems = InvoiceItem::where('invoice_id', (int)$request->invoice_id)->get()->keyBy('bilty_id');
+        }
+
         $rows = [];
         $srNo = 1;
 
@@ -783,13 +912,31 @@ class InvoiceController extends Controller
                     $grossAmount = $packagesVal * $rateVal;
                 }
             }
-            $unloadRate = 0.0;
-            $unloadAmount = 0.0;
+            $unloadRate = $item ? (float)$item->unload_rate : 0.0;
+            $unloadAmount = $item ? (float)$item->unload_amount : 0.0;
             $odaCharge = (float)$b->dd_charge;
             $otherCharges = (float)($b->rc_charge + $b->sc_charge);
             $totalRowAmt = (float)$b->net_amount;
             if ($totalRowAmt <= 0) {
                 $totalRowAmt = $grossAmount + $stCharge + $otherCharges + $odaCharge + $unloadAmount;
+            }
+
+            // Override with saved InvoiceItem values if this bilty is saved in the invoice
+            if (isset($savedInvoiceItems[$b->id])) {
+                $savedItem = $savedInvoiceItems[$b->id];
+                $packagesVal = (int)$savedItem->packages;
+                $weightVal = (float)$savedItem->weight;
+                $weightType = $savedItem->weight_type ?: $weightType;
+                $rateVal = (float)$savedItem->rate;
+                $stCharge = (float)$savedItem->st_charge;
+                $grossAmount = (float)$savedItem->freight_amount;
+                $unloadRate = (float)$savedItem->unload_rate;
+                $unloadAmount = (float)$savedItem->unload_amount;
+                $otherCharges = (float)$savedItem->other_charges;
+                $odaCharge = (float)$savedItem->oda_charge;
+                $totalRowAmt = (float)$savedItem->amount;
+                if (!empty($savedItem->item_description)) $itemDesc = $savedItem->item_description;
+                if (!empty($savedItem->invoice_no_ref)) $invNoRef = $savedItem->invoice_no_ref;
             }
 
             $rows[] = [
@@ -829,7 +976,7 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'invoice_no' => 'required|integer',
+            'invoice_no' => 'required',
             'invoice_date' => 'required|date',
             'series' => 'nullable|string',
             'account_name' => 'required|string',
@@ -840,7 +987,7 @@ class InvoiceController extends Controller
         try {
             $defaultSeries = $this->getDefaultSeries();
             $series = $request->filled('series') ? strtoupper(trim($request->series)) : $defaultSeries;
-            $invoiceNo = (int)$request->invoice_no;
+            $invoiceNo = Invoice::parseInvoiceNo($request->invoice_no);
 
             // Check duplicate
             $existing = Invoice::where('series', $series)->where('invoice_no', $invoiceNo)->first();
@@ -940,10 +1087,6 @@ class InvoiceController extends Controller
 
                         if ($biltyDate) {
                             $bilty->invoice_date = $biltyDate;
-                        }
-
-                        if (!empty($itemData['bilty_no']) && is_numeric($itemData['bilty_no'])) {
-                            $bilty->bilty_no = (int)$itemData['bilty_no'];
                         }
 
                         if (isset($itemData['cn_no'])) {
@@ -1094,7 +1237,7 @@ class InvoiceController extends Controller
         $invoice = Invoice::findOrFail($id);
 
         $request->validate([
-            'invoice_no' => 'required|integer',
+            'invoice_no' => 'required',
             'invoice_date' => 'required|date',
             'series' => 'nullable|string',
             'account_name' => 'required|string',
@@ -1105,7 +1248,7 @@ class InvoiceController extends Controller
         try {
             $defaultSeries = $this->getDefaultSeries();
             $series = $request->filled('series') ? strtoupper(trim($request->series)) : ($invoice->series ?: $defaultSeries);
-            $invoiceNo = (int)$request->invoice_no;
+            $invoiceNo = Invoice::parseInvoiceNo($request->invoice_no);
 
             // Check duplicate excluding current invoice
             $existing = Invoice::where('series', $series)->where('invoice_no', $invoiceNo)->where('id', '!=', $invoice->id)->first();
@@ -1208,10 +1351,6 @@ class InvoiceController extends Controller
 
                         if ($biltyDate) {
                             $bilty->invoice_date = $biltyDate;
-                        }
-
-                        if (!empty($itemData['bilty_no']) && is_numeric($itemData['bilty_no'])) {
-                            $bilty->bilty_no = (int)$itemData['bilty_no'];
                         }
 
                         if (isset($itemData['cn_no'])) {

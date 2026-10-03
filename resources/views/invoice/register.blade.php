@@ -471,8 +471,8 @@
                             <td class="text-center">{{ $srNo++ }}</td>
                             <td class="text-center">{{ $inv->series }}</td>
                             <td class="text-center font-bold">
-                                <a href="{{ route('invoice.edit', $inv->id) }}" style="color: #0044cc; text-decoration: underline; font-weight: bold;" title="Edit Invoice #{{ $inv->series }}-{{ $inv->invoice_no }}">
-                                    {{ $inv->invoice_no }}
+                                <a href="{{ route('invoice.edit', $inv->id) }}" style="color: #0044cc; text-decoration: underline; font-weight: bold;" title="Edit Invoice {{ $inv->formatted_invoice_no }}">
+                                    {{ $inv->formatted_invoice_no }}
                                 </a>
                                 @if($isDraft)
                                     <span style="background: #fffbeb; color: #92400e; border: 1px solid #d97706; font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 4px; font-weight: 800; display: inline-block; white-space: nowrap;" title="Saved as Draft">Draft</span>

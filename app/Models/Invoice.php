@@ -67,4 +67,57 @@ class Invoice extends Model
     {
         return $this->hasMany(Bilty::class, 'invoice_id');
     }
+
+    /**
+     * Format numeric invoice number to string e.g. GSTOML2627045
+     */
+    public static function formatInvoiceNo($num, $series = '26-27'): string
+    {
+        if ($num === null || $num === '') return '';
+
+        $prefix = 'GSTOML';
+        $cleanSeries = '2627';
+
+        if (!empty($series)) {
+            $s = trim($series);
+            if (preg_match('/^(\d{2})[^\d]*(\d{2})$/', $s, $m)) {
+                $cleanSeries = $m[1] . $m[2];
+            } else {
+                $cleanSeries = preg_replace('/[^0-9A-Za-z]/', '', $s);
+            }
+        }
+
+        if (!is_numeric($num)) {
+            $num = static::parseInvoiceNo($num);
+        }
+
+        $paddedNum = str_pad((string)(int)$num, 3, '0', STR_PAD_LEFT);
+        return $prefix . $cleanSeries . $paddedNum;
+    }
+
+    /**
+     * Parse integer invoice_no from user input (e.g. GSTOML2627045 -> 45, "045" -> 45, 45 -> 45)
+     */
+    public static function parseInvoiceNo($input): int
+    {
+        if (is_numeric($input)) {
+            return (int)$input;
+        }
+        $str = trim((string)$input);
+        if (preg_match('/^(?:GSTOML)?[0-9]{4}([0-9]+)$/i', $str, $matches)) {
+            return (int)$matches[1];
+        }
+        if (preg_match('/(\d+)$/', $str, $matches)) {
+            return (int)$matches[1];
+        }
+        return (int)preg_replace('/[^0-9]/', '', $str);
+    }
+
+    /**
+     * Accessor for formatted invoice number e.g. GSTOML2627045
+     */
+    public function getFormattedInvoiceNoAttribute(): string
+    {
+        return static::formatInvoiceNo($this->invoice_no, $this->series);
+    }
 }

@@ -164,7 +164,9 @@
         border: 1px solid #bbb;
         padding: 2px 3px !important;
         text-align: center;
-        white-space: nowrap;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
         color: #000;
         font-size: 12.5px;
         font-weight: 500;
@@ -176,7 +178,6 @@
     .party-bill-table td select {
         min-width: 100% !important;
         width: 100%;
-        height: 24px;
         border: 1.5px solid #7f9db9;
         background: #fff;
         color: #000;
@@ -185,6 +186,9 @@
         font-family: inherit;
         padding: 1px 4px;
         box-sizing: border-box !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
         field-sizing: content;
     }
     .grid-input:focus,
@@ -453,7 +457,7 @@
                     </div>
                     <div class="ctrl-group">
                         <label for="invoice_no">INVOICE NO.</label>
-                        <input type="number" name="invoice_no" id="invoice_no" value="{{ old('invoice_no', $existingInvoice->invoice_no ?? $nextInvoiceNo) }}" style="width: 70px;" required autocomplete="off">
+                        <input type="text" name="invoice_no" id="invoice_no" value="{{ old('invoice_no', isset($existingInvoice) ? $existingInvoice->formatted_invoice_no : \App\Models\Invoice::formatInvoiceNo($nextInvoiceNo ?? 40, $series ?? ($defaultSeries ?? '26-27'))) }}" style="width: 150px; font-weight: 700; text-align: center;" required autocomplete="off">
                     </div>
                 </div>
 
@@ -586,7 +590,7 @@
                             <th width="65">C.N.NO</th>
                             <th width="45">PKT</th>
                             <th width="180">FROM</th>
-                            <th width="130">DESTINATION</th>
+                            <th width="91">DESTINATION</th>
                             <th width="140">CONSIGNEE</th>
                             <th width="100">ITEMS</th>
                             <th width="80">INV.NO</th>
@@ -629,7 +633,7 @@
                                     </td>
                                     <td>
                                         <div class="autocomplete-grid-wrap">
-                                            <input type="text" class="grid-input text-left auto-grid-input" name="items[{{ $index }}][to_location]" value="{{ $item->to_location }}" data-original="{{ $item->to_location }}" data-type="location" style="width: 120px;" autocomplete="off">
+                                            <input type="text" class="grid-input text-left auto-grid-input" name="items[{{ $index }}][to_location]" value="{{ $item->to_location }}" data-original="{{ $item->to_location }}" data-type="location" style="width: 91px;" autocomplete="off">
                                             <div class="auto-grid-dropdown"></div>
                                         </div>
                                     </td>
@@ -744,7 +748,7 @@
                 <div class="footer-row-3">
                     <div class="voucher-group">
                         <label for="voucher_no_display">VOUCHER NO. :</label>
-                        <input type="text" id="voucher_no_display" value="{{ $existingInvoice->invoice_no ?? ($nextInvoiceNo ?? 40) }}" readonly style="width: 80px;">
+                        <input type="text" id="voucher_no_display" value="{{ isset($existingInvoice) ? $existingInvoice->formatted_invoice_no : \App\Models\Invoice::formatInvoiceNo($nextInvoiceNo ?? 40, $series ?? ($defaultSeries ?? '26-27')) }}" readonly style="width: 150px; font-weight: 700; text-align: center;">
                     </div>
 
                     <div class="desktop-btn-bar">
@@ -1323,12 +1327,135 @@
             return Number.isInteger(num) ? num : num.toFixed(3).replace(/\.?0+$/, '');
         };
 
+        window.draftRowState = window.draftRowState || {};
+
+        window.saveRowDraftState = function(tr) {
+            if (!tr) return;
+            const biltyIdInput = tr.querySelector('input[name*="[bilty_id]"]');
+            const biltyId = biltyIdInput ? biltyIdInput.value : null;
+            if (!biltyId) return;
+
+            const cb = tr.querySelector('.row-checkbox');
+            const getVal = (field) => {
+                const el = tr.querySelector(`[name*="[${field}]"]`);
+                return el ? el.value : '';
+            };
+
+            window.draftRowState[biltyId] = {
+                checked: cb ? cb.checked : true,
+                date: getVal('date'),
+                bilty_no: getVal('bilty_no'),
+                packages: getVal('packages'),
+                from_location: getVal('from_location'),
+                to_location: getVal('to_location'),
+                consignee_name: getVal('consignee_name'),
+                item_description: getVal('item_description'),
+                invoice_no_ref: getVal('invoice_no_ref'),
+                weight: getVal('weight'),
+                weight_type: getVal('weight_type'),
+                rate: getVal('rate'),
+                st_charge: getVal('st_charge'),
+                freight_amount: getVal('freight_amount'),
+                unload_rate: getVal('unload_rate'),
+                unload_amount: getVal('unload_amount'),
+                other_charges: getVal('other_charges'),
+                oda_charge: getVal('oda_charge'),
+                amount: getVal('amount')
+            };
+        };
+
+        window._saveBiltyDebounceTimers = window._saveBiltyDebounceTimers || {};
+
+        window.saveBiltyCellToDatabase = function(tr, immediate = false) {
+            if (!tr) return;
+            const biltyIdInput = tr.querySelector('input[name*="[bilty_id]"]');
+            const biltyId = biltyIdInput ? biltyIdInput.value : null;
+            if (!biltyId) return;
+
+            if (typeof window.saveRowDraftState === 'function') {
+                window.saveRowDraftState(tr);
+            }
+
+            const getVal = (field) => {
+                const el = tr.querySelector(`[name*="[${field}]"]`);
+                return el ? el.value : '';
+            };
+
+            const payload = {
+                bilty_id: biltyId,
+                date: getVal('date'),
+                packages: getVal('packages'),
+                from_location: getVal('from_location'),
+                to_location: getVal('to_location'),
+                consignee_name: getVal('consignee_name'),
+                item_description: getVal('item_description'),
+                invoice_no_ref: getVal('invoice_no_ref'),
+                weight: getVal('weight'),
+                weight_type: getVal('weight_type'),
+                rate: getVal('rate'),
+                st_charge: getVal('st_charge'),
+                freight_amount: getVal('freight_amount'),
+                unload_rate: getVal('unload_rate'),
+                unload_amount: getVal('unload_amount'),
+                other_charges: getVal('other_charges'),
+                oda_charge: getVal('oda_charge'),
+                amount: getVal('amount')
+            };
+
+            const doSave = () => {
+                fetch('{{ route("invoice.update_bilty_item") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.error('Database cell save failed:', err));
+            };
+
+            if (window._saveBiltyDebounceTimers[biltyId]) {
+                clearTimeout(window._saveBiltyDebounceTimers[biltyId]);
+                delete window._saveBiltyDebounceTimers[biltyId];
+            }
+
+            if (immediate) {
+                doSave();
+            } else {
+                window._saveBiltyDebounceTimers[biltyId] = setTimeout(doSave, 300);
+            }
+        };
+
         let html = '';
         rows.forEach((row, index) => {
+            const biltyId = row.bilty_id;
+            if (biltyId && window.draftRowState[biltyId]) {
+                const draft = window.draftRowState[biltyId];
+                if (draft.date !== undefined) row.date = draft.date;
+                if (draft.packages !== undefined) row.packages = draft.packages;
+                if (draft.from_location !== undefined) row.from_location = draft.from_location;
+                if (draft.to_location !== undefined) row.to_location = draft.to_location;
+                if (draft.consignee_name !== undefined) row.consignee_name = draft.consignee_name;
+                if (draft.item_description !== undefined) row.item_description = draft.item_description;
+                if (draft.invoice_no_ref !== undefined) row.invoice_no_ref = draft.invoice_no_ref;
+                if (draft.weight !== undefined) row.weight = draft.weight;
+                if (draft.weight_type !== undefined) row.weight_type = draft.weight_type;
+                if (draft.rate !== undefined) row.rate = draft.rate;
+                if (draft.st_charge !== undefined) row.st_charge = draft.st_charge;
+                if (draft.freight_amount !== undefined) row.freight_amount = draft.freight_amount;
+                if (draft.unload_rate !== undefined) row.unload_rate = draft.unload_rate;
+                if (draft.unload_amount !== undefined) row.unload_amount = draft.unload_amount;
+                if (draft.other_charges !== undefined) row.other_charges = draft.other_charges;
+                if (draft.oda_charge !== undefined) row.oda_charge = draft.oda_charge;
+                if (draft.amount !== undefined) row.amount = draft.amount;
+                if (draft.checked !== undefined) row.checked = draft.checked;
+            }
+            const isRowChecked = (row.checked !== false);
+
             html += `
-                <tr class="selected-row" id="row_${index}">
+                <tr class="${isRowChecked ? 'selected-row' : ''}" id="row_${index}">
                     <td>
-                        <input type="checkbox" class="row-checkbox" checked onchange="toggleRowSelection(this, ${index})">
+                        <input type="checkbox" class="row-checkbox" ${isRowChecked ? 'checked' : ''} onchange="toggleRowSelection(this, ${index})">
                         <input type="hidden" name="items[${index}][bilty_id]" value="${row.bilty_id || ''}">
                     </td>
                     <td>${row.sr_no || (index + 1)}</td>
@@ -1350,7 +1477,7 @@
                     </td>
                     <td>
                         <div class="autocomplete-grid-wrap">
-                            <input type="text" class="grid-input text-left auto-grid-input" name="items[${index}][to_location]" value="${row.to_location || ''}" data-original="${row.to_location || ''}" data-type="location" style="width: 120px;" autocomplete="off">
+                            <input type="text" class="grid-input text-left auto-grid-input" name="items[${index}][to_location]" value="${row.to_location || ''}" data-original="${row.to_location || ''}" data-type="location" style="width: 91px;" autocomplete="off">
                             <div class="auto-grid-dropdown"></div>
                         </div>
                     </td>
@@ -1906,9 +2033,17 @@
         const partyTable = document.getElementById('partyBillTable');
         if (partyTable) {
             partyTable.addEventListener('input', function(e) {
+                const tr = e.target ? e.target.closest('tr') : null;
+                if (tr && typeof window.saveRowDraftState === 'function') {
+                    window.saveRowDraftState(tr);
+                }
                 window.triggerAutoSave(500);
             });
             partyTable.addEventListener('change', function(e) {
+                const tr = e.target ? e.target.closest('tr') : null;
+                if (tr && typeof window.saveRowDraftState === 'function') {
+                    window.saveRowDraftState(tr);
+                }
                 window.triggerAutoSave(0);
             });
         }
@@ -1954,10 +2089,44 @@
                 confirmButtonColor: '#0f3460'
             });
         @endif
+
+        const tbody = document.getElementById('partyBillTableBody');
+        if (tbody) {
+            tbody.addEventListener('input', function(e) {
+                const tr = e.target.closest('tr');
+                if (tr && typeof window.saveBiltyCellToDatabase === 'function') {
+                    window.saveBiltyCellToDatabase(tr, false);
+                }
+            });
+            tbody.addEventListener('change', function(e) {
+                const tr = e.target.closest('tr');
+                if (tr && typeof window.saveBiltyCellToDatabase === 'function') {
+                    window.saveBiltyCellToDatabase(tr, true);
+                }
+            });
+            tbody.addEventListener('blur', function(e) {
+                const tr = e.target.closest('tr');
+                if (tr && typeof window.saveBiltyCellToDatabase === 'function') {
+                    window.saveBiltyCellToDatabase(tr, true);
+                }
+            }, true);
+        }
     });
 
     // Global function to fetch pending bilties
     function fetchPendingBilties() {
+        if (window._saveBiltyDebounceTimers) {
+            Object.keys(window._saveBiltyDebounceTimers).forEach(id => {
+                clearTimeout(window._saveBiltyDebounceTimers[id]);
+            });
+            window._saveBiltyDebounceTimers = {};
+        }
+        document.querySelectorAll('#partyBillTableBody tr[id^="row_"]').forEach(tr => {
+            if (typeof window.saveBiltyCellToDatabase === 'function') {
+                window.saveBiltyCellToDatabase(tr, true);
+            }
+        });
+
         const accountSelect = document.getElementById('account_name_select');
         const partyName = accountSelect ? accountSelect.value.trim() : '';
         const consignorSelect = document.getElementById('consignor_select');
@@ -2025,6 +2194,9 @@
         if (tr) {
             if (checkbox.checked) tr.classList.add('selected-row');
             else tr.classList.remove('selected-row');
+            if (typeof window.saveRowDraftState === 'function') {
+                window.saveRowDraftState(tr);
+            }
         }
         recalculateTotals();
     };
@@ -2084,6 +2256,10 @@
                 if (rEl) {
                     rEl.value = val;
                     onUnitCatOrRateOrPktChange(i);
+                    const targetTr = document.getElementById(`row_${i}`);
+                    if (targetTr && typeof window.saveRowDraftState === 'function') {
+                        window.saveRowDraftState(targetTr);
+                    }
                 }
             }
         }
@@ -2126,6 +2302,10 @@
                 if (uEl) {
                     uEl.value = val;
                     updateRowUnloadRate(i, val);
+                    const targetTr = document.getElementById(`row_${i}`);
+                    if (targetTr && typeof window.saveRowDraftState === 'function') {
+                        window.saveRowDraftState(targetTr);
+                    }
                 }
             }
         }
@@ -2297,6 +2477,16 @@
             amtInput.value = fmtCalcVal(total);
         }
         
+        const tr = document.getElementById(`row_${index}`);
+        if (tr) {
+            if (typeof window.saveRowDraftState === 'function') {
+                window.saveRowDraftState(tr);
+            }
+            if (typeof window.saveBiltyCellToDatabase === 'function') {
+                window.saveBiltyCellToDatabase(tr);
+            }
+        }
+
         window.recalculateTotals();
     };
 

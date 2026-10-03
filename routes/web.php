@@ -45,6 +45,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/invoice/edit/{id}', [InvoiceController::class, 'edit'])->name('invoice.edit');
         Route::get('/invoice/month-parties', [InvoiceController::class, 'getMonthParties'])->name('invoice.month_parties');
         Route::get('/invoice/pending-bilties', [InvoiceController::class, 'getPendingBilties'])->name('invoice.pending_bilties');
+        Route::post('/invoice/update-bilty-item', [InvoiceController::class, 'updateBiltyItem'])->name('invoice.update_bilty_item');
         Route::post('/invoice/store', [InvoiceController::class, 'store'])->name('invoice.store');
         Route::put('/invoice/update/{id}', [InvoiceController::class, 'update'])->name('invoice.update');
         Route::post('/invoice/cancel/{id}', [InvoiceController::class, 'cancel'])->name('invoice.cancel');
