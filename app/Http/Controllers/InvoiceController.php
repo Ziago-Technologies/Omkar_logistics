@@ -209,6 +209,19 @@ class InvoiceController extends Controller
         $monthPartiesMap['all'] = $allData;
         $monthPartiesMap['-- All Months --'] = $allData;
 
+        // Register aliases for case-insensitivity and 'Sept' -> 'Sep'
+        foreach (array_keys($monthPartiesMap) as $mKey) {
+            if ($mKey !== '' && $mKey !== 'all' && $mKey !== '-- All Months --') {
+                $monthPartiesMap[strtolower($mKey)] = $monthPartiesMap[$mKey];
+                $monthPartiesMap[strtoupper($mKey)] = $monthPartiesMap[$mKey];
+                if (stripos($mKey, 'Sep/') === 0) {
+                    $septKey = preg_replace('/^sep\//i', 'Sept/', $mKey);
+                    $monthPartiesMap[$septKey] = $monthPartiesMap[$mKey];
+                    $monthPartiesMap[strtolower($septKey)] = $monthPartiesMap[$mKey];
+                }
+            }
+        }
+
         krsort($months);
         if (empty($months)) {
             $months[date('Y-m')] = date('M/Y');
@@ -217,6 +230,12 @@ class InvoiceController extends Controller
         // Default active month (latest month with unbilled bilties)
         $defaultMonth = reset($months);
         $selectedMonth = $request->query('month', $defaultMonth);
+        if ($selectedMonth) {
+            $selectedMonthNorm = preg_replace('/^sept\//i', 'Sep/', trim($selectedMonth));
+            if (isset($monthPartiesMap[$selectedMonthNorm])) {
+                $selectedMonth = $selectedMonthNorm;
+            }
+        }
 
         $currentMonthData = $monthPartiesMap[$selectedMonth] ?? ($monthPartiesMap[$defaultMonth] ?? ['consignors' => [], 'pending_parties' => [], 'destinations' => [], 'items' => [], 'party_destinations' => [], 'party_items' => []]);
         $consignors = $currentMonthData['consignors'];
@@ -426,12 +445,31 @@ class InvoiceController extends Controller
         $monthPartiesMap['all'] = $allData;
         $monthPartiesMap['-- All Months --'] = $allData;
 
+        // Register aliases for case-insensitivity and 'Sept' -> 'Sep'
+        foreach (array_keys($monthPartiesMap) as $mKey) {
+            if ($mKey !== '' && $mKey !== 'all' && $mKey !== '-- All Months --') {
+                $monthPartiesMap[strtolower($mKey)] = $monthPartiesMap[$mKey];
+                $monthPartiesMap[strtoupper($mKey)] = $monthPartiesMap[$mKey];
+                if (stripos($mKey, 'Sep/') === 0) {
+                    $septKey = preg_replace('/^sep\//i', 'Sept/', $mKey);
+                    $monthPartiesMap[$septKey] = $monthPartiesMap[$mKey];
+                    $monthPartiesMap[strtolower($septKey)] = $monthPartiesMap[$mKey];
+                }
+            }
+        }
+
         krsort($months);
         if (empty($months)) {
             $months[date('Y-m')] = date('M/Y');
         }
 
         $selectedMonth = $existingInvoice->for_month ?: reset($months);
+        if ($selectedMonth) {
+            $selectedMonthNorm = preg_replace('/^sept\//i', 'Sep/', trim($selectedMonth));
+            if (isset($monthPartiesMap[$selectedMonthNorm])) {
+                $selectedMonth = $selectedMonthNorm;
+            }
+        }
 
         $currentMonthData = $monthPartiesMap[$selectedMonth] ?? ['consignors' => [], 'pending_parties' => [], 'destinations' => [], 'items' => [], 'party_destinations' => [], 'party_items' => []];
         $consignors = $currentMonthData['consignors'];
@@ -800,30 +838,47 @@ class InvoiceController extends Controller
             $query->whereNull('invoice_id')->tbb();
         }
 
-        // Filter by Account / Party name
-        if ($request->filled('party_name')) {
-            $partyName = trim($request->party_name);
-            $query->where(function($q) use ($partyName) {
-                $q->where('billing_party_name', 'like', '%' . $partyName . '%')
-                  ->orWhere('consignor_name', 'like', '%' . $partyName . '%')
-                  ->orWhereHas('billingParty', function($sq) use ($partyName) {
-                      $sq->where('ledger_name', 'like', '%' . $partyName . '%');
-                  })
-                  ->orWhereHas('consignor', function($sq) use ($partyName) {
-                      $sq->where('ledger_name', 'like', '%' . $partyName . '%');
-                  });
-            });
-        }
+        // Filter by Account / Party name or Consignor using EXACT equality (=)
+        $pName = $request->filled('party_name') ? trim($request->party_name) : '';
+        $cName = $request->filled('consignor_name') ? trim($request->consignor_name) : '';
 
-        // Filter by specific Consignor
-        if ($request->filled('consignor_name')) {
-            $consignorName = trim($request->consignor_name);
-            $query->where(function($q) use ($consignorName) {
-                $q->where('consignor_name', 'like', '%' . $consignorName . '%')
-                  ->orWhereHas('consignor', function($sq) use ($consignorName) {
-                      $sq->where('ledger_name', 'like', '%' . $consignorName . '%');
+        if ($pName !== '' && $cName !== '' && $pName === $cName) {
+            $query->where(function($q) use ($pName) {
+                $q->where('billing_party_name', '=', $pName)
+                  ->orWhere('consignor_name', '=', $pName)
+                  ->orWhereHas('billingParty', function($sq) use ($pName) {
+                      $sq->where('ledger_name', '=', $pName);
+                  })
+                  ->orWhereHas('consignor', function($sq) use ($pName) {
+                      $sq->where('ledger_name', '=', $pName);
                   });
             });
+        } else {
+            if ($pName !== '') {
+                $query->where(function($q) use ($pName) {
+                    $q->where('billing_party_name', '=', $pName)
+                      ->orWhere('consignor_name', '=', $pName)
+                      ->orWhereHas('billingParty', function($sq) use ($pName) {
+                          $sq->where('ledger_name', '=', $pName);
+                      })
+                      ->orWhereHas('consignor', function($sq) use ($pName) {
+                          $sq->where('ledger_name', '=', $pName);
+                      });
+                });
+            }
+
+            if ($cName !== '') {
+                $query->where(function($q) use ($cName) {
+                    $q->where('consignor_name', '=', $cName)
+                      ->orWhere('billing_party_name', '=', $cName)
+                      ->orWhereHas('consignor', function($sq) use ($cName) {
+                          $sq->where('ledger_name', '=', $cName);
+                      })
+                      ->orWhereHas('billingParty', function($sq) use ($cName) {
+                          $sq->where('ledger_name', '=', $cName);
+                      });
+                });
+            }
         }
 
         // Filter by Month (e.g. '2026-09' or 'Sep/2026')
@@ -842,23 +897,23 @@ class InvoiceController extends Controller
             }
         }
 
-        // Filter by Destination (city or hub location)
+        // Filter by Destination using EXACT equality (=)
         if ($request->filled('destination')) {
             $dest = trim($request->destination);
             $query->where(function($q) use ($dest) {
                 $q->whereHas('toCity', function($sq) use ($dest) {
-                    $sq->where('name', 'like', '%' . $dest . '%');
+                    $sq->where('name', '=', $dest);
                 })->orWhereHas('toLocation', function($sq) use ($dest) {
-                    $sq->where('name', 'like', '%' . $dest . '%');
+                    $sq->where('name', '=', $dest);
                 });
             });
         }
 
-        // Filter by Item Description
+        // Filter by Item Description using EXACT equality (=)
         if ($request->filled('item_description')) {
             $itemDesc = trim($request->item_description);
             $query->whereHas('items', function($sq) use ($itemDesc) {
-                $sq->where('description', 'like', '%' . $itemDesc . '%');
+                $sq->where('description', '=', $itemDesc);
             });
         }
 
@@ -1075,7 +1130,6 @@ class InvoiceController extends Controller
                     $bilty = Bilty::with('items')->find($biltyId);
                     if ($bilty) {
                         $bilty->invoice_id = $invoice->id;
-
                         if ($biltyDate) {
                             $bilty->invoice_date = $biltyDate;
                         }
@@ -1176,7 +1230,7 @@ class InvoiceController extends Controller
                 }
             }
 
-            // Link any remaining bilties to this invoice if not already updated
+            // Link any remaining bilties to this invoice
             if (!empty($biltyIds)) {
                 Bilty::whereIn('id', $biltyIds)->whereNull('invoice_id')->update(['invoice_id' => $invoice->id]);
             }
@@ -1339,7 +1393,6 @@ class InvoiceController extends Controller
                     $bilty = Bilty::with('items')->find($biltyId);
                     if ($bilty) {
                         $bilty->invoice_id = $invoice->id;
-
                         if ($biltyDate) {
                             $bilty->invoice_date = $biltyDate;
                         }
@@ -1592,10 +1645,10 @@ class InvoiceController extends Controller
     {
         $query = Invoice::with(['account', 'consignor', 'items', 'user']);
 
-        // 1. Party / Account Name
+        // 1. Party / Account Name (Exact equality =)
         $party = trim($request->input('party', $request->input('account_name', '')));
         if ($party !== '') {
-            $query->where('account_name', 'like', '%' . $party . '%');
+            $query->where('account_name', '=', $party);
         }
 
         // 2. Series
@@ -1644,7 +1697,7 @@ class InvoiceController extends Controller
      */
     public function register(Request $request)
     {
-        $fromDate = $request->input('from_date', date('Y-m-d'));
+        $fromDate = $request->input('from_date', date('Y-m-01'));
         $toDate = $request->input('to_date', date('Y-m-d'));
 
         if (!$request->has('from_date')) {

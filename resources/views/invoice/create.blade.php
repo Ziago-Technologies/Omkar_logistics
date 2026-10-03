@@ -755,10 +755,10 @@
                         <button type="button" class="btn-desktop-cyan" onclick="window.location.href='{{ route('invoice.create') }}';" title="New Invoice">
                             NEW
                         </button>
-                        <button type="button" class="btn-desktop-cyan" id="btnDraftInvoice" onclick="submitInvoiceWithStatus('draft');" style="background: linear-gradient(to bottom, #fff8db 0%, #fae69e 50%, #f7d768 100%); border-color: #d4a017; font-weight: bold;" title="Save as Draft">
-                            DRAFT
+                        <button type="button" class="btn-desktop-cyan" id="btnFinalizeInvoice" onclick="handleFinalizeBtn();" style="background: linear-gradient(to bottom, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%); border-color: #10b981; color: #064e3b; font-weight: bold;" title="Finalize Invoice">
+                            FINALIZE
                         </button>
-                        <button type="button" class="btn-desktop-cyan" id="btnPrintInvoice" onclick="handlePrintBtn();" style="font-weight: bold; background: linear-gradient(to bottom, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%); border-color: #2563eb;" title="Finalize & Print Invoice">
+                        <button type="button" class="btn-desktop-cyan" id="btnPrintInvoice" onclick="handlePrintBtn();" style="font-weight: bold; background: linear-gradient(to bottom, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%); border-color: #2563eb;" title="Print Invoice">
                             PRINT
                         </button>
                         <button type="button" class="btn-desktop-cyan" id="btnCancelInvoice" onclick="handleCancelBtn();" @if($isEdit ?? false) style="background: linear-gradient(to bottom, #fee2e2 0%, #fecaca 50%, #fca5a5 100%); border-color: #ef4444;" title="Cancel this Bill" @else title="Reset Form" @endif>
@@ -929,118 +929,145 @@
 
     // Global function to update Account, Consignor, Pending Parties, Destination, and Item dropdowns
     window.loadMonthParties = function(monthVal, autoFetchAfter = false) {
-        const key = (monthVal && monthVal !== '-- All Months --') ? monthVal : 'all';
-        const data = monthPartiesMap[key] || monthPartiesMap[monthVal] || monthPartiesMap['all'] || { consignors: [], pending_parties: [], destinations: [], items: [], party_destinations: {}, party_items: {} };
+        if (!monthVal) monthVal = '';
+        let normMonth = monthVal.trim();
+        if (/^sept\//i.test(normMonth)) {
+            normMonth = normMonth.replace(/^sept\//i, 'Sep/');
+        }
 
-        const accountSelect = document.getElementById('account_name_select');
-        const prevAccountVal = accountSelect ? accountSelect.value : '';
+        const key = (normMonth && normMonth !== '-- All Months --') ? normMonth : 'all';
+        let data = monthPartiesMap[key] || monthPartiesMap[normMonth] || monthPartiesMap[monthVal] || monthPartiesMap[key.toLowerCase()] || monthPartiesMap['all'] || { consignors: [], pending_parties: [], destinations: [], items: [], party_destinations: {}, party_items: {} };
 
-        const consignorSelect = document.getElementById('consignor_select');
-        const prevConsignorVal = consignorSelect ? consignorSelect.value : '';
+        const applyData = (monthData) => {
+            const accountSelect = document.getElementById('account_name_select');
+            const prevAccountVal = accountSelect ? accountSelect.value : '';
 
-        const pendingSelect = document.getElementById('pending_party_select');
-        const prevPendingVal = pendingSelect ? pendingSelect.value : '';
+            const consignorSelect = document.getElementById('consignor_select');
+            const prevConsignorVal = consignorSelect ? consignorSelect.value : '';
 
-        const cCount = (data.consignors && data.consignors.length) ? data.consignors.length : 0;
-        const pCount = (data.pending_parties && data.pending_parties.length) ? data.pending_parties.length : 0;
+            const pendingSelect = document.getElementById('pending_party_select');
+            const prevPendingVal = pendingSelect ? pendingSelect.value : '';
 
-        // 1. Update Account Dropdown (Contains same consignors as Consignor dropdown, changes with month)
-        if (accountSelect) {
-            let aHtml = `<option value="">-- Select Account (${cCount}) --</option>`;
-            if (data.consignors && data.consignors.length > 0) {
-                data.consignors.forEach(function(item) {
-                    aHtml += `<option value="${item}">${item}</option>`;
-                });
-            }
-            accountSelect.innerHTML = aHtml;
-            if (prevAccountVal) {
-                if (data.consignors && data.consignors.includes(prevAccountVal)) {
-                    accountSelect.value = prevAccountVal;
+            const cCount = (monthData.consignors && monthData.consignors.length) ? monthData.consignors.length : 0;
+            const pCount = (monthData.pending_parties && monthData.pending_parties.length) ? monthData.pending_parties.length : 0;
+
+            // 1. Update Account Dropdown (Contains same consignors as Consignor dropdown, changes with month)
+            if (accountSelect) {
+                let aHtml = `<option value="">-- Select Account (${cCount}) --</option>`;
+                if (monthData.consignors && monthData.consignors.length > 0) {
+                    monthData.consignors.forEach(function(item) {
+                        aHtml += `<option value="${item}">${item}</option>`;
+                    });
+                }
+                accountSelect.innerHTML = aHtml;
+                if (prevAccountVal) {
+                    if (monthData.consignors && monthData.consignors.includes(prevAccountVal)) {
+                        accountSelect.value = prevAccountVal;
+                    } else {
+                        const opt = document.createElement('option');
+                        opt.value = prevAccountVal;
+                        opt.textContent = prevAccountVal;
+                        opt.selected = true;
+                        accountSelect.appendChild(opt);
+                    }
                 } else {
-                    const opt = document.createElement('option');
-                    opt.value = prevAccountVal;
-                    opt.textContent = prevAccountVal;
-                    opt.selected = true;
-                    accountSelect.appendChild(opt);
+                    accountSelect.value = '';
                 }
-            } else {
-                accountSelect.value = '';
             }
-        }
-        const aBadge = document.getElementById('account_count_badge');
-        if (aBadge) aBadge.textContent = `(${cCount})`;
+            const aBadge = document.getElementById('account_count_badge');
+            if (aBadge) aBadge.textContent = `(${cCount})`;
 
-        // 2. Update Consignor Dropdown
-        if (consignorSelect) {
-            let cHtml = `<option value="">-- All Consignors (${cCount}) --</option>`;
-            if (data.consignors && data.consignors.length > 0) {
-                data.consignors.forEach(function(item) {
-                    cHtml += `<option value="${item}">${item}</option>`;
-                });
-            }
-            consignorSelect.innerHTML = cHtml;
-            if (prevConsignorVal) {
-                if (data.consignors && data.consignors.includes(prevConsignorVal)) {
-                    consignorSelect.value = prevConsignorVal;
+            // 2. Update Consignor Dropdown
+            if (consignorSelect) {
+                let cHtml = `<option value="">-- All Consignors (${cCount}) --</option>`;
+                if (monthData.consignors && monthData.consignors.length > 0) {
+                    monthData.consignors.forEach(function(item) {
+                        cHtml += `<option value="${item}">${item}</option>`;
+                    });
+                }
+                consignorSelect.innerHTML = cHtml;
+                if (prevConsignorVal) {
+                    if (monthData.consignors && monthData.consignors.includes(prevConsignorVal)) {
+                        consignorSelect.value = prevConsignorVal;
+                    } else {
+                        const opt = document.createElement('option');
+                        opt.value = prevConsignorVal;
+                        opt.textContent = prevConsignorVal;
+                        opt.selected = true;
+                        consignorSelect.appendChild(opt);
+                    }
                 } else {
-                    const opt = document.createElement('option');
-                    opt.value = prevConsignorVal;
-                    opt.textContent = prevConsignorVal;
-                    opt.selected = true;
-                    consignorSelect.appendChild(opt);
+                    consignorSelect.value = '';
                 }
-            } else {
-                consignorSelect.value = '';
             }
-        }
-        const cBadge = document.getElementById('consignor_count_badge');
-        if (cBadge) cBadge.textContent = `(${cCount})`;
+            const cBadge = document.getElementById('consignor_count_badge');
+            if (cBadge) cBadge.textContent = `(${cCount})`;
 
-        // 3. Update Pending Bill Parties Dropdown
-        if (pendingSelect) {
-            let pHtml = `<option value="">-- Select Pending Party (${pCount}) --</option>`;
-            if (data.pending_parties && data.pending_parties.length > 0) {
-                data.pending_parties.forEach(function(item) {
-                    pHtml += `<option value="${item}">${item}</option>`;
-                });
-            }
-            pendingSelect.innerHTML = pHtml;
-            if (prevPendingVal && data.pending_parties && data.pending_parties.includes(prevPendingVal)) {
-                pendingSelect.value = prevPendingVal;
-            } else {
-                pendingSelect.value = '';
-            }
-        }
-        const pBadge = document.getElementById('pending_count_badge');
-        if (pBadge) pBadge.textContent = `(${pCount})`;
-
-        // 4. Update Destination Dropdown
-        window.updateDestinationDropdown();
-
-        // 5. Update Item Dropdown
-        window.updateItemDropdown();
-
-        // 6. Update Unit Dropdown
-        window.updateUnitDropdown();
-
-        if (autoFetchAfter) {
-            const accountVal = accountSelect ? accountSelect.value.trim() : '';
-            const consignorVal = consignorSelect ? consignorSelect.value.trim() : '';
-            if (accountVal || consignorVal) {
-                fetchPendingBilties();
-            } else {
-                const tbody = document.getElementById('partyBillTableBody');
-                if (tbody) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="21" style="text-align: center; color: #444; padding: 40px; font-size: 12px;">
-                                Please select an <strong>Account</strong>, <strong>Consignor</strong>, or <strong>Pending Bill Party</strong> above to load pending consignment notes.
-                            </td>
-                        </tr>
-                    `;
+            // 3. Update Pending Bill Parties Dropdown
+            if (pendingSelect) {
+                let pHtml = `<option value="">-- Select Pending Party (${pCount}) --</option>`;
+                if (monthData.pending_parties && monthData.pending_parties.length > 0) {
+                    monthData.pending_parties.forEach(function(item) {
+                        pHtml += `<option value="${item}">${item}</option>`;
+                    });
                 }
-                recalculateTotals();
+                pendingSelect.innerHTML = pHtml;
+                if (prevPendingVal && monthData.pending_parties && monthData.pending_parties.includes(prevPendingVal)) {
+                    pendingSelect.value = prevPendingVal;
+                } else {
+                    pendingSelect.value = '';
+                }
             }
+            const pBadge = document.getElementById('pending_count_badge');
+            if (pBadge) pBadge.textContent = `(${pCount})`;
+
+            // 4. Update Destination Dropdown
+            window.updateDestinationDropdown();
+
+            // 5. Update Item Dropdown
+            window.updateItemDropdown();
+
+            // 6. Update Unit Dropdown
+            window.updateUnitDropdown();
+
+            if (autoFetchAfter) {
+                const accountVal = accountSelect ? accountSelect.value.trim() : '';
+                const consignorVal = consignorSelect ? consignorSelect.value.trim() : '';
+                if (accountVal || consignorVal) {
+                    fetchPendingBilties();
+                } else {
+                    const tbody = document.getElementById('partyBillTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="21" style="text-align: center; color: #444; padding: 40px; font-size: 12px;">
+                                    Please select an <strong>Account</strong>, <strong>Consignor</strong>, or <strong>Pending Bill Party</strong> above to load pending consignment notes.
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    recalculateTotals();
+                }
+            }
+        };
+
+        applyData(data);
+
+        // Fetch fresh list from server in background to ensure 100% accuracy
+        if (normMonth && normMonth !== '-- All Months --') {
+            fetch(`{{ route('invoice.month_parties', [], false) }}?month=${encodeURIComponent(normMonth)}`)
+                .then(r => r.json())
+                .then(serverData => {
+                    if (serverData && serverData.consignors) {
+                        monthPartiesMap[key] = serverData;
+                        monthPartiesMap[normMonth] = serverData;
+                        const curMonth = document.getElementById('for_month')?.value;
+                        if (curMonth === monthVal || curMonth === normMonth) {
+                            applyData(serverData);
+                        }
+                    }
+                })
+                .catch(() => {});
         }
     };
 
@@ -2056,7 +2083,6 @@
         });
 
         // Enter key navigation: Shift focus to the next cell / input field on Enter
-        const invoiceForm = document.getElementById('invoiceForm');
         if (invoiceForm) {
             invoiceForm.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.keyCode === 13) {
@@ -2531,8 +2557,49 @@
         window.recalculateTotals();
     };
 
-    // Print Button Handler: Finalizes invoice status to 'finalized' and opens print view
+    // Finalize Button Handler: Explicitly sets status to 'finalized' and saves the invoice
+    window.handleFinalizeBtn = function() {
+        const accountSelect = document.getElementById('account_name_select');
+        const accountName = accountSelect ? accountSelect.value.trim() : '';
+        const rows = document.querySelectorAll('#partyBillTableBody tr.selected-row');
+
+        if (!accountName || rows.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cannot Finalize Invoice',
+                text: 'Please select an Account and at least one consignment note before finalizing.',
+                confirmButtonColor: '#0f3460'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Finalize Invoice?',
+            text: 'Are you sure you want to finalize this invoice? Once finalized, it will be marked as official.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Finalize Invoice',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.submitInvoiceWithStatus('finalized');
+            }
+        });
+    };
+
+    // Print Button Handler: ONLY prints the current invoice without modifying status
     window.handlePrintBtn = function() {
+        const existingIdInput = document.getElementById('existing_invoice_id');
+        const existingId = existingIdInput ? existingIdInput.value : '';
+
+        // If invoice is already saved, directly open print view
+        if (existingId) {
+            window.open(`{{ url('/invoice/print') }}/${existingId}`, '_blank');
+            return;
+        }
+
         const accountSelect = document.getElementById('account_name_select');
         const accountName = accountSelect ? accountSelect.value.trim() : '';
         const rows = document.querySelectorAll('#partyBillTableBody tr.selected-row');
@@ -2550,25 +2617,12 @@
         const form = document.getElementById('invoiceForm');
         if (!form) return;
 
-        updateAutoSaveIndicator('saving', 'Finalizing & saving invoice...');
-
-        const statusInput = document.getElementById('invoice_status');
-        if (statusInput) statusInput.value = 'finalized';
+        updateAutoSaveIndicator('saving', 'Saving invoice for print...');
 
         const formData = new FormData(form);
-        const existingIdInput = document.getElementById('existing_invoice_id');
-        const existingId = existingIdInput ? existingIdInput.value : '';
+        formData.delete('_method');
 
-        let targetUrl = form.action;
-        if (existingId) {
-            formData.set('_method', 'PUT');
-            targetUrl = `{{ url('/invoice/update') }}/${existingId}`;
-        } else {
-            formData.delete('_method');
-            targetUrl = `{{ route('invoice.store') }}`;
-        }
-
-        fetch(targetUrl, {
+        fetch(`{{ route('invoice.store') }}`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -2584,37 +2638,30 @@
             return response.json();
         })
         .then(data => {
-            if (data.success) {
-                const targetId = data.invoice_id || existingId;
-                if (data.invoice_id) {
-                    if (existingIdInput) existingIdInput.value = data.invoice_id;
-                    form.action = data.update_url || `{{ url('/invoice/update') }}/${data.invoice_id}`;
-                    if (data.edit_url && window.location.pathname !== `/invoice/edit/${data.invoice_id}`) {
-                        window.history.replaceState({}, '', data.edit_url);
-                    }
+            if (data.success && data.invoice_id) {
+                if (existingIdInput) existingIdInput.value = data.invoice_id;
+                form.action = data.update_url || `{{ url('/invoice/update') }}/${data.invoice_id}`;
+                if (data.edit_url && window.location.pathname !== `/invoice/edit/${data.invoice_id}`) {
+                    window.history.replaceState({}, '', data.edit_url);
                 }
-
-                updateAutoSaveIndicator('saved', 'Invoice Finalized & Saved');
-
-                if (targetId) {
-                    window.open(`{{ url('/invoice/print') }}/${targetId}`, '_blank');
-                }
+                updateAutoSaveIndicator('saved', 'Invoice Saved');
+                window.open(`{{ url('/invoice/print') }}/${data.invoice_id}`, '_blank');
             } else {
-                updateAutoSaveIndicator('error', data.message || 'Finalize failed');
+                updateAutoSaveIndicator('error', data.message || 'Save failed');
                 Swal.fire({
-                    title: 'Finalize Failed',
-                    text: data.message || 'Could not finalize invoice.',
+                    title: 'Save Failed',
+                    text: data.message || 'Could not save invoice for printing.',
                     icon: 'error',
                     confirmButtonColor: '#0f3460'
                 });
             }
         })
         .catch(err => {
-            console.error('Print Finalize error:', err);
-            updateAutoSaveIndicator('error', err.message || 'Finalize failed');
+            console.error('Print error:', err);
+            updateAutoSaveIndicator('error', err.message || 'Save failed');
             Swal.fire({
                 title: 'Print Error',
-                text: err.message || 'An error occurred while finalizing invoice.',
+                text: err.message || 'An error occurred while preparing invoice for print.',
                 icon: 'error',
                 confirmButtonColor: '#0f3460'
             });
