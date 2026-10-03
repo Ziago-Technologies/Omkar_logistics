@@ -1520,8 +1520,18 @@ class InvoiceController extends Controller
             $invoice->status = 'cancelled';
             $invoice->save();
 
-            // Release attached bilties
-            Bilty::where('invoice_id', $invoice->id)->update(['invoice_id' => null]);
+            // Release attached bilties and reset invoice-specific cell data
+            $bilties = Bilty::with('items')->where('invoice_id', $invoice->id)->get();
+            foreach ($bilties as $bilty) {
+                $bilty->invoice_id = null;
+                foreach ($bilty->items as $item) {
+                    $item->unload_rate = 0.00;
+                    $item->unload_amount = 0.00;
+                    $item->save();
+                }
+                $bilty->net_amount = (float)$bilty->gross_amount + (float)$bilty->st_charge + (float)$bilty->rc_charge + (float)$bilty->sc_charge + (float)$bilty->dd_charge;
+                $bilty->save();
+            }
 
             DB::commit();
 
@@ -1542,8 +1552,18 @@ class InvoiceController extends Controller
 
         DB::beginTransaction();
         try {
-            // Release attached bilties
-            Bilty::where('invoice_id', $invoice->id)->update(['invoice_id' => null]);
+            // Release attached bilties and reset invoice-specific cell data
+            $bilties = Bilty::with('items')->where('invoice_id', $invoice->id)->get();
+            foreach ($bilties as $bilty) {
+                $bilty->invoice_id = null;
+                foreach ($bilty->items as $item) {
+                    $item->unload_rate = 0.00;
+                    $item->unload_amount = 0.00;
+                    $item->save();
+                }
+                $bilty->net_amount = (float)$bilty->gross_amount + (float)$bilty->st_charge + (float)$bilty->rc_charge + (float)$bilty->sc_charge + (float)$bilty->dd_charge;
+                $bilty->save();
+            }
 
             // Delete invoice items and invoice
             $invoice->items()->delete();

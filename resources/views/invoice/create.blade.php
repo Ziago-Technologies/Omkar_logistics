@@ -1102,10 +1102,6 @@
         if (typeof window.autoFitAllGridInputs === 'function') {
             window.autoFitAllGridInputs();
         }
-
-        if (typeof window.triggerAutoSave === 'function') {
-            window.triggerAutoSave(600);
-        }
     };
     function recalculateTotals() { window.recalculateTotals(); }
 
@@ -1223,6 +1219,12 @@
         const formData = new FormData(form);
         const existingIdInput = document.getElementById('existing_invoice_id');
         const existingId = existingIdInput ? existingIdInput.value : '';
+
+        // Never auto-save or create an invoice in the background without explicit user action (e.g. clicking Finalize)
+        if (!existingId && !isUserClick) {
+            isAutoSaving = false;
+            return;
+        }
 
         let targetUrl = form.action;
         if (existingId) {
@@ -1427,6 +1429,7 @@
             };
 
             const doSave = () => {
+                updateAutoSaveIndicator('saving', 'Saving cell data...');
                 fetch('{{ route("invoice.update_bilty_item") }}', {
                     method: 'POST',
                     headers: {
@@ -1435,7 +1438,19 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify(payload)
-                }).catch(err => console.error('Database cell save failed:', err));
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        updateAutoSaveIndicator('saved', 'Cell data saved');
+                    } else {
+                        updateAutoSaveIndicator('error', data.message || 'Cell save failed');
+                    }
+                })
+                .catch(err => {
+                    console.error('Database cell save failed:', err);
+                    updateAutoSaveIndicator('error', 'Cell save failed');
+                });
             };
 
             if (window._saveBiltyDebounceTimers[biltyId]) {
@@ -2053,7 +2068,7 @@
             });
         }
 
-        // Global Table Event Delegation for AutoSave on ANY cell input / select change
+        // Global Table Event Delegation for Row Draft State
         const partyTable = document.getElementById('partyBillTable');
         if (partyTable) {
             partyTable.addEventListener('input', function(e) {
@@ -2061,26 +2076,14 @@
                 if (tr && typeof window.saveRowDraftState === 'function') {
                     window.saveRowDraftState(tr);
                 }
-                window.triggerAutoSave(500);
             });
             partyTable.addEventListener('change', function(e) {
                 const tr = e.target ? e.target.closest('tr') : null;
                 if (tr && typeof window.saveRowDraftState === 'function') {
                     window.saveRowDraftState(tr);
                 }
-                window.triggerAutoSave(0);
             });
         }
-
-        // Header inputs AutoSave
-        const autoSaveHeaderIds = ['invoice_date', 'series', 'invoice_no', 'account_name_select', 'consignor_select', 'for_month', 'item_filter', 'unit_filter', 'destination_filter', 'is_gst_bill', 'is_igst', 'gst_percent', 'remark'];
-        autoSaveHeaderIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('input', () => window.triggerAutoSave(500));
-                el.addEventListener('change', () => window.triggerAutoSave(0));
-            }
-        });
 
         // Enter key navigation: Shift focus to the next cell / input field on Enter
         if (invoiceForm) {
