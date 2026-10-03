@@ -606,7 +606,7 @@ $netReceived = (float)($receipt->receipt_amount);
         <div class="cr-canvas-area">
             <div class="report-sheet">
                 <div class="report-box">
-                    
+
                     <div>
                         <!-- Header Table with Logo and Company Branding -->
                         <table class="header-table">
@@ -619,7 +619,7 @@ $netReceived = (float)($receipt->receipt_amount);
                                     <div class="company-tagline">FLEET OWNERS &bull; TRANSPORT CONTRACTORS</div>
                                     <div class="company-address">
                                         Head Office: Lokhra Lalunggaon Near NPS School, Guwahati - 781040 (Assam)<br>
-                                        Phone: +91 98640-82153, 97335-35513 &bull; Email: omkaar.logistics@gmail.com
+                                        Phone: +91 98640-82153, 97335-35513 &bull; Email: omkaar.lagistics@gmail.com
                                     </div>
                                     <div class="company-tax">
                                         GSTIN: 18AAHFO6045J1ZY &nbsp;|&nbsp; PAN: AAHFO6045J

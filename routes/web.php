@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/invoice/destroy/{id}', [InvoiceController::class, 'destroy'])->name('invoice.destroy');
         Route::post('/invoice/preview', [InvoiceController::class, 'preview'])->name('invoice.preview');
         Route::get('/invoice/print/{id}', [InvoiceController::class, 'print'])->name('invoice.print');
+        Route::get('/invoice/pdf/{id}', [InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
     });
 
     // Report: Invoice Register

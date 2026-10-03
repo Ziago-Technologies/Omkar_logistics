@@ -1639,6 +1639,59 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Download or view PDF of Invoice / Party Bill using DomPDF.
+     */
+    public function downloadPdf(Request $request, $id)
+    {
+        $invoice = Invoice::with(['items', 'account.stateRelation', 'consignor', 'user'])->findOrFail($id);
+        $isPdf = true;
+        $html = view('invoice.print', compact('invoice', 'isPdf'))->render();
+
+        $logoPath = public_path('assets/logo.jpg');
+        if (file_exists($logoPath)) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/jpeg;base64,' . base64_encode($logoData);
+            $html = preg_replace('/src="[^"]*assets\/logo\.jpg"/', 'src="' . $logoBase64 . '"', $html);
+        }
+
+        $tempDir = storage_path('app/pdf_temp');
+        if (!file_exists($tempDir)) {
+            @mkdir($tempDir, 0777, true);
+        }
+        $fontDir = storage_path('fonts');
+        if (!file_exists($fontDir)) {
+            @mkdir($fontDir, 0777, true);
+        }
+
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+        $options->set('defaultMediaType', 'print');
+        $options->set('defaultFont', 'Helvetica');
+        $options->set('dpi', 96);
+        $options->set('tempDir', $tempDir);
+        $options->set('fontDir', $fontDir);
+        $options->set('fontCache', $fontDir);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+        $dompdf->setPaper('a4', 'landscape');
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+
+        $cleanInvNo = preg_replace('/[^A-Za-z0-9_\-]/', '_', $invoice->formatted_invoice_no ?: ('INV_' . $invoice->id));
+        $filename = 'Invoice_' . $cleanInvNo . '.pdf';
+
+        $disposition = $request->has('download') ? 'attachment' : 'inline';
+
+        return response($dompdf->output(), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => $disposition . '; filename="' . $filename . '"',
+            'Cache-Control'       => 'private, max-age=0, must-revalidate',
+            'Pragma'              => 'public',
+        ]);
+    }
+
+    /**
      * Build the filtered Invoice query based on request parameters.
      */
     protected function getFilteredInvoicesQuery(Request $request)

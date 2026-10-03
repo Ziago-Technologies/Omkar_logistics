@@ -468,7 +468,7 @@
                             <div>Mangaldoi, Kharupetia, Tangla, Dhekiajuli, Basimari,</div>
                             <div>Udalguri, Rangia, Nalbari, Patshala</div>
                             <div>📞 98640-82153, 97335-35513</div>
-                            <div>✉ omkaar.logistics@gmail.com</div>
+                            <div>✉ omkaar.lagistics@gmail.com</div>
                             <div>GSTIN: 18AAHFO6045J1ZY</div>
                         </div>
                     </td>

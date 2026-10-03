@@ -21,6 +21,8 @@ package-lock.json
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/fonts
+/storage/app/pdf_temp
 /vendor
 _ide_helper.php
 Homestead.json

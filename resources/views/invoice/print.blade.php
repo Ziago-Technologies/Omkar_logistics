@@ -14,35 +14,35 @@
         }
 
         @page {
-            size: 210mm 148mm;
-            margin: 4mm 5mm 4mm 5mm;
+            size: 297mm 210mm;
+            margin: 0 !important;
         }
 
         body {
             background-color: #f4f6f8;
-            font-size: 8px;
+            font-size: 13.5px;
             padding: 10px;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
 
         .invoice-container {
-            width: 200mm;
+            width: 287mm;
             max-width: 100%;
             margin: 0 auto;
             background: #fff;
             position: relative;
         }
 
-        /* Non-GST Party Bill Container - Full A5 Landscape Height with perfect borders */
+        /* Non-GST Party Bill Container - Full A4 Landscape Height with perfect borders */
         .standard-bill-container {
             border: 1.2px solid #000;
             padding: 5px 7px;
             background: #fff;
             box-sizing: border-box;
             width: 100%;
-            height: 138mm;
-            min-height: 138mm;
+            height: 200mm;
+            min-height: 200mm;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -50,7 +50,7 @@
 
         /* Floating Action Bar */
         .no-print-bar {
-            width: 200mm;
+            width: 287mm;
             max-width: 100%;
             margin: 0 auto 8px auto;
             display: flex;
@@ -76,6 +76,26 @@
 
         .btn-print-action:hover {
             background: #162447;
+        }
+
+        .btn-download-action {
+            background: #27ae60;
+            color: #fff;
+            padding: 6px 16px;
+            border: none;
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-decoration: none;
+        }
+
+        .btn-download-action:hover {
+            background: #219653;
         }
 
         .btn-back-action {
@@ -106,34 +126,34 @@
         }
 
         .company-name-title {
-            font-size: 15px;
+            font-size: 32px;
             font-weight: bold;
             letter-spacing: 0.5px;
             line-height: 1.15;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
             text-transform: uppercase;
         }
 
         .company-sub-details {
-            font-size: 7.5px;
-            line-height: 1.3;
+            font-size: 14px;
+            line-height: 1.45;
             margin-bottom: 4px;
         }
 
         .bill-to-section {
-            font-size: 8px;
-            line-height: 1.3;
-            margin-top: 3px;
+            font-size: 13.5px;
+            line-height: 1.45;
+            margin-top: 4px;
         }
 
         .bill-to-title {
             font-weight: bold;
-            font-size: 8.5px;
-            margin-bottom: 1px;
+            font-size: 15px;
+            margin-bottom: 2px;
         }
 
         .bill-to-party-name {
-            font-size: 9.5px;
+            font-size: 17px;
             font-weight: bold;
             text-transform: uppercase;
         }
@@ -141,14 +161,14 @@
         .meta-box-table {
             border-collapse: collapse;
             border: 1.2px solid #000;
-            width: 235px;
-            font-size: 8px;
+            width: 380px;
+            font-size: 13.5px;
         }
 
         .meta-box-table th,
         .meta-box-table td {
             border: 1.2px solid #000;
-            padding: 2.5px 4px;
+            padding: 6px 6px;
             text-align: center;
         }
 
@@ -156,14 +176,16 @@
             font-weight: bold;
             background: #fff;
             text-transform: uppercase;
+            font-size: 13.5px;
         }
 
         .meta-box-table td {
             font-weight: bold;
+            font-size: 14.5px;
         }
 
         .bill-table-block {
-            margin-top: 3px;
+            margin-top: 4px;
             margin-bottom: 4px;
         }
 
@@ -171,7 +193,7 @@
             width: 100%;
             border-collapse: collapse;
             border: 1.2px solid #000;
-            font-size: 7.5px;
+            font-size: 12.5px;
             table-layout: fixed;
             box-sizing: border-box;
             page-break-inside: avoid;
@@ -188,13 +210,13 @@
 
         .invoice-main-table th {
             border: 1px solid #000;
-            padding: 3px 1px !important;
+            padding: 6px 3px !important;
             text-align: center;
             font-weight: bold;
             background: #fff;
             text-transform: uppercase;
-            font-size: 7px;
-            line-height: 1.1;
+            font-size: 12px;
+            line-height: 1.2;
             white-space: normal !important;
             word-wrap: break-word !important;
             word-break: break-word !important;
@@ -203,8 +225,8 @@
 
         .invoice-main-table td {
             border: 1px solid #000;
-            padding: 4.5px 5px;
-            font-size: 8.5px;
+            padding: 6px 6px;
+            font-size: 12.5px;
             line-height: 1.35;
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -220,8 +242,8 @@
         .amount-words-bar {
             border: 1.2px solid #000;
             border-top: none;
-            padding: 3px 5px;
-            font-size: 8px;
+            padding: 7px 10px;
+            font-size: 13.5px;
             font-weight: bold;
             text-transform: uppercase;
             background: #fff;
@@ -244,27 +266,28 @@
 
         .bottom-left-notes {
             flex: 1;
-            padding: 5px 6px;
-            font-size: 7.5px;
-            line-height: 1.28;
+            padding: 8px 10px;
+            font-size: 13px;
+            line-height: 1.45;
             border-right: 1.2px solid #000;
         }
 
         .bank-details-title {
             font-weight: bold;
             text-decoration: underline;
-            margin-top: 1px;
-            margin-bottom: 1px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            font-size: 14px;
         }
 
         .notes-list {
-            margin-top: 2px;
-            font-size: 7px;
-            line-height: 1.2;
+            margin-top: 3px;
+            font-size: 12px;
+            line-height: 1.4;
         }
 
         .bottom-right-totals {
-            width: 245px;
+            width: 360px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -273,12 +296,12 @@
         .totals-sub-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8px;
+            font-size: 13.5px;
         }
 
         .totals-sub-table td {
             border-bottom: 1.2px solid #000;
-            padding: 2.5px 4px;
+            padding: 5px 6px;
         }
 
         .totals-sub-table td:first-child {
@@ -292,9 +315,9 @@
         }
 
         .signature-box {
-            padding: 28px 8px 4px 8px;
+            padding: 24px 10px 8px 10px;
             text-align: right;
-            font-size: 8px;
+            font-size: 13.5px;
             font-weight: bold;
         }
 
@@ -307,40 +330,38 @@
             background: #fff;
             box-sizing: border-box;
             width: 100%;
-            height: 138mm;
-            min-height: 138mm;
+            height: 200mm;
+            min-height: 200mm;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
         .gst-company-header {
-            margin-bottom: 4px;
+            margin-bottom: 10px;
         }
 
         .gst-company-title {
             font-family: "Times New Roman", Times, serif, Arial;
-            font-size: 17px;
+            font-size: 38px;
             font-weight: bold;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
             line-height: 1.15;
-            margin-bottom: 1px;
+            margin-bottom: 4px;
         }
 
         .gst-company-sub {
-            font-size: 7.5px;
-            line-height: 1.25;
+            font-size: 14.5px;
+            line-height: 1.5;
         }
 
         .gst-content-box {
             border: 1.2px solid #000;
             width: 100%;
             box-sizing: border-box;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            margin-top: auto;
+            flex: none;
         }
 
         .gst-billto-meta-container {
@@ -350,41 +371,41 @@
 
         .gst-billto-left {
             flex: 1;
-            padding: 4px 6px;
-            font-size: 8px;
-            line-height: 1.3;
+            padding: 10px 12px;
+            font-size: 14px;
+            line-height: 1.5;
             border-right: 1.2px solid #000;
         }
 
         .gst-billto-head {
             font-weight: bold;
-            font-size: 8.5px;
-            margin-bottom: 1px;
+            font-size: 15.5px;
+            margin-bottom: 4px;
         }
 
         .gst-billto-name {
-            font-size: 9.5px;
+            font-size: 18px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 1px;
+            margin-bottom: 4px;
         }
 
         .gst-meta-right {
-            width: 235px;
+            width: 390px;
         }
 
         .gst-meta-table {
             width: 100%;
             height: 100%;
             border-collapse: collapse;
-            font-size: 8px;
+            font-size: 14px;
         }
 
         .gst-meta-table th,
         .gst-meta-table td {
             border-bottom: 1.2px solid #000;
             border-right: 1.2px solid #000;
-            padding: 3px 3px;
+            padding: 7px 6px;
             text-align: center;
         }
 
@@ -397,28 +418,30 @@
             font-weight: bold;
             background: #fff;
             text-transform: uppercase;
+            font-size: 14px;
         }
 
         .gst-meta-table td {
             font-weight: bold;
+            font-size: 15px;
         }
 
         /* Description & Tax Breakdown Table */
         .gst-tax-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8px;
-            flex: 1;
+            font-size: 14px;
         }
 
         .gst-tax-table th {
             border-bottom: 1.2px solid #000;
             border-right: 1.2px solid #000;
-            padding: 3px 4px;
+            padding: 7px 8px;
             font-weight: bold;
             text-align: center;
             text-transform: uppercase;
             background: #fff;
+            font-size: 14.5px;
         }
 
         .gst-tax-table th:last-child {
@@ -427,7 +450,8 @@
 
         .gst-tax-table td {
             border-right: 1.2px solid #000;
-            padding: 2.5px 4px;
+            padding: 6px 8px;
+            font-size: 14px;
         }
 
         .gst-tax-table td:last-child {
@@ -435,10 +459,10 @@
         }
 
         .gst-desc-cell {
-            padding: 6px 6px !important;
+            padding: 12px 12px !important;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 8px;
+            font-size: 15.5px;
             vertical-align: top;
         }
 
@@ -446,40 +470,43 @@
             text-align: center;
             font-weight: bold;
             vertical-align: top;
-            padding-top: 6px !important;
+            padding-top: 12px !important;
+            font-size: 15.5px;
         }
 
         .gst-amt-top-cell {
             text-align: right;
             font-weight: bold;
             vertical-align: top;
-            padding-top: 6px !important;
+            padding-top: 12px !important;
+            font-size: 15.5px;
         }
 
         .gst-tax-row td {
             border-top: 1.2px solid #000;
+            font-size: 14px;
         }
 
         .gst-total-row td {
             border-top: 1.2px solid #000;
             border-bottom: 1.2px solid #000;
             font-weight: bold;
-            font-size: 8.5px;
-            padding: 3px 4px;
+            font-size: 16.5px;
+            padding: 8px 8px;
         }
 
         /* Bottom Bank Details */
         .gst-bank-bottom-row {
             display: flex;
             align-items: stretch;
-            min-height: 90px;
+            min-height: 125px;
         }
 
         .gst-bank-bottom-left {
-            width: 480px;
-            padding: 4px 6px;
-            font-size: 7.5px;
-            line-height: 1.25;
+            width: 660px;
+            padding: 10px 12px;
+            font-size: 13.5px;
+            line-height: 1.5;
             border-right: 1.2px solid #000;
         }
 
@@ -488,7 +515,7 @@
             display: flex;
             align-items: flex-end;
             justify-content: flex-end;
-            padding: 6px 10px;
+            padding: 10px 14px;
         }
 
         /* Page 2 Annexure Styles */
@@ -496,7 +523,7 @@
             background: #fff;
             width: 100%;
             box-sizing: border-box;
-            min-height: 138mm;
+            min-height: 200mm;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -505,10 +532,10 @@
         .transportation-header-box {
             border: 1.2px solid #000;
             text-align: center;
-            padding: 3px 0;
+            padding: 7px 0;
             font-weight: bold;
-            font-size: 9px;
-            letter-spacing: 0.5px;
+            font-size: 16px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
             background: #fff;
         }
@@ -518,7 +545,7 @@
             border-collapse: collapse;
             border: 1.2px solid #000;
             border-top: none;
-            font-size: 7.5px;
+            font-size: 12.5px;
             table-layout: fixed;
             box-sizing: border-box;
             page-break-inside: auto;
@@ -535,13 +562,13 @@
 
         .annexure-table th {
             border: 1px solid #000;
-            padding: 3px 1px !important;
+            padding: 5px 2px !important;
             text-align: center;
             font-weight: bold;
             background: #fff;
             text-transform: uppercase;
-            font-size: 7px;
-            line-height: 1.1;
+            font-size: 11.5px;
+            line-height: 1.2;
             white-space: normal !important;
             word-wrap: break-word !important;
             word-break: break-word !important;
@@ -550,9 +577,9 @@
 
         .annexure-table td {
             border: 1px solid #000;
-            padding: 4.5px 5px;
-            font-size: 8.5px;
-            line-height: 1.35;
+            padding: 4px 4px;
+            font-size: 12px;
+            line-height: 1.25;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
@@ -561,17 +588,21 @@
             font-weight: bold;
             border-top: 1.2px solid #000;
             border-bottom: 1.2px solid #000;
+            font-size: 13.5px;
+            padding: 5px 6px;
         }
 
         .annexure-words-bar {
             border: 1.2px solid #000;
             border-top: none;
-            padding: 3px 5px;
-            font-size: 8px;
+            padding: 5px 8px;
+            font-size: 13px;
             font-weight: bold;
             text-transform: uppercase;
             box-sizing: border-box;
             width: 100%;
+            page-break-after: avoid;
+            break-after: avoid;
         }
 
         .annexure-bottom-section {
@@ -581,24 +612,25 @@
             display: flex;
             justify-content: space-between;
             align-items: stretch;
-            page-break-inside: avoid;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
             box-sizing: border-box;
             width: 100%;
         }
 
         .annexure-notes-box {
             flex: 1;
-            padding: 4px 6px;
-            font-size: 7.5px;
-            line-height: 1.25;
+            padding: 6px 10px;
+            font-size: 11px;
+            line-height: 1.35;
             border-right: 1.2px solid #000;
         }
 
         .annexure-sig-box {
-            width: 245px;
-            padding: 28px 8px 4px 8px;
+            width: 320px;
+            padding: 14px 10px 6px 10px;
             text-align: right;
-            font-size: 8px;
+            font-size: 13px;
             font-weight: bold;
         }
 
@@ -636,34 +668,40 @@
 
         @media print {
             @page {
-                size: 210mm 148mm;
-                margin: 4mm 5mm 4mm 5mm;
+                size: 297mm 210mm;
+                margin: 0 !important;
             }
             html, body {
-                width: 210mm !important;
-                height: 148mm !important;
+                width: 297mm !important;
+                height: auto !important;
+                min-height: 100% !important;
                 background: #fff !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                overflow: hidden !important;
+                overflow: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .no-print-bar {
                 display: none !important;
             }
             .invoice-container {
-                max-width: 100% !important;
-                width: 100% !important;
-                height: 138mm !important;
+                width: 287mm !important;
+                max-width: 287mm !important;
+                height: auto !important;
+                min-height: auto !important;
                 border: none !important;
                 padding: 0 !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
             }
             .gst-page-1-wrapper {
                 border: 1.2px solid #000 !important;
                 padding: 4px 6px !important;
-                width: 100% !important;
-                height: 138mm !important;
-                min-height: 138mm !important;
+                width: 287mm !important;
+                max-width: 287mm !important;
+                height: 200mm !important;
+                min-height: 200mm !important;
+                margin: 5mm auto !important;
                 box-sizing: border-box !important;
                 display: flex !important;
                 flex-direction: column !important;
@@ -671,31 +709,62 @@
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
+            .gst-content-box {
+                margin-top: auto !important;
+                flex: none !important;
+            }
             .gst-annexure-wrapper {
+                display: block !important;
                 border: none !important;
-                padding: 0 !important;
+                padding: 4mm 0 0 0 !important;
+                width: 287mm !important;
+                margin: 0 auto !important;
+                height: auto !important;
+                min-height: auto !important;
+                box-sizing: border-box !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+            }
+            .annexure-table {
                 width: 100% !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+            }
+            .annexure-table thead {
+                display: table-header-group !important;
+            }
+            .annexure-table tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .annexure-bottom-section {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                margin-top: 6px !important;
             }
             .standard-bill-container {
                 border: 1.2px solid #000 !important;
                 padding: 4px 6px !important;
-                width: 100% !important;
-                height: 138mm !important;
-                min-height: 138mm !important;
+                width: 287mm !important;
+                max-width: 287mm !important;
+                min-height: 200mm !important;
+                height: auto !important;
+                margin: 5mm auto !important;
                 box-sizing: border-box !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
             }
             .page-break {
                 page-break-after: always !important;
                 break-after: page !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 border: none !important;
             }
             .page-break::after {
                 content: "" !important;
+                display: none !important;
             }
         }
     </style>
@@ -703,40 +772,42 @@
 <body>
 
     @php
-    function convertNumberToIndianWords(float $number)
-    {
-        $decimal = round($number - ($no = floor($number)), 2) * 100;
-        $hundred = null;
-        $digits_length = strlen($no);
-        $i = 0;
-        $str = array();
-        $words = array(
-            0 => '', 1 => 'ONE', 2 => 'TWO',
-            3 => 'THREE', 4 => 'FOUR', 5 => 'FIVE', 6 => 'SIX',
-            7 => 'SEVEN', 8 => 'EIGHT', 9 => 'NINE',
-            10 => 'TEN', 11 => 'ELEVEN', 12 => 'TWELVE',
-            13 => 'THIRTEEN', 14 => 'FOURTEEN', 15 => 'FIFTEEN',
-            16 => 'SIXTEEN', 17 => 'SEVENTEEN', 18 => 'EIGHTEEN',
-            19 => 'NINETEEN', 20 => 'TWENTY', 30 => 'THIRTY',
-            40 => 'FORTY', 50 => 'FIFTY', 60 => 'SIXTY',
-            70 => 'SEVENTY', 80 => 'EIGHTY', 90 => 'NINETY'
-        );
-        $digits = array('', 'HUNDRED', 'THOUSAND', 'LAKH', 'CRORE');
-        while ($i < $digits_length) {
-            $divider = ($i == 2) ? 10 : 100;
-            $number = floor($no % $divider);
-            $no = floor($no / $divider);
-            $i += ($divider == 10) ? 1 : 2;
-            if ($number) {
-                $plural = (($counter = count($str)) && $number > 9) ? '' : '';
-                $hundred = ($counter == 1 && $str[0]) ? ' AND ' : null;
-                $str [] = ($number < 21) ? $words[$number] . ' ' . $digits[$counter] . $plural . ' ' . $hundred
-                    : $words[floor($number / 10) * 10] . ' ' . $words[$number % 10] . ' ' . $digits[$counter] . $plural . ' ' . $hundred;
-            } else $str[] = null;
+    if (!function_exists('convertNumberToIndianWords')) {
+        function convertNumberToIndianWords(float $number)
+        {
+            $decimal = round($number - ($no = floor($number)), 2) * 100;
+            $hundred = null;
+            $digits_length = strlen($no);
+            $i = 0;
+            $str = array();
+            $words = array(
+                0 => '', 1 => 'ONE', 2 => 'TWO',
+                3 => 'THREE', 4 => 'FOUR', 5 => 'FIVE', 6 => 'SIX',
+                7 => 'SEVEN', 8 => 'EIGHT', 9 => 'NINE',
+                10 => 'TEN', 11 => 'ELEVEN', 12 => 'TWELVE',
+                13 => 'THIRTEEN', 14 => 'FOURTEEN', 15 => 'FIFTEEN',
+                16 => 'SIXTEEN', 17 => 'SEVENTEEN', 18 => 'EIGHTEEN',
+                19 => 'NINETEEN', 20 => 'TWENTY', 30 => 'THIRTY',
+                40 => 'FORTY', 50 => 'FIFTY', 60 => 'SIXTY',
+                70 => 'SEVENTY', 80 => 'EIGHTY', 90 => 'NINETY'
+            );
+            $digits = array('', 'HUNDRED', 'THOUSAND', 'LAKH', 'CRORE');
+            while ($i < $digits_length) {
+                $divider = ($i == 2) ? 10 : 100;
+                $number = floor($no % $divider);
+                $no = floor($no / $divider);
+                $i += ($divider == 10) ? 1 : 2;
+                if ($number) {
+                    $plural = (($counter = count($str)) && $number > 9) ? '' : '';
+                    $hundred = ($counter == 1 && $str[0]) ? ' AND ' : null;
+                    $str [] = ($number < 21) ? $words[$number] . ' ' . $digits[$counter] . $plural . ' ' . $hundred
+                        : $words[floor($number / 10) * 10] . ' ' . $words[$number % 10] . ' ' . $digits[$counter] . $plural . ' ' . $hundred;
+                } else $str[] = null;
+            }
+            $Rupees = implode('', array_reverse($str));
+            $paise = ($decimal > 0) ? " AND " . ($words[$decimal / 10 * 10] . " " . $words[$decimal % 10]) . ' PAISE' : '';
+            return 'RUPEES: ' . ($Rupees ? trim($Rupees) : 'ZERO') . $paise . ' ONLY.';
         }
-        $Rupees = implode('', array_reverse($str));
-        $paise = ($decimal > 0) ? " AND " . ($words[$decimal / 10 * 10] . " " . $words[$decimal % 10]) . ' PAISE' : '';
-        return 'RUPEES: ' . ($Rupees ? trim($Rupees) : 'ZERO') . $paise . ' ONLY.';
     }
 
     // Format Working Month (e.g. Jul-2026)
@@ -812,7 +883,7 @@
     $taxableAmount = (float)$invoice->bill_amount;
     $gstPercent = $invoice->gst_percent > 0 ? (float)$invoice->gst_percent : 18.0;
     $isIgst = (bool)$invoice->is_igst;
-    
+
     if ($invoice->gst_amount > 0) {
         $totalGstLiability = (float)$invoice->gst_amount;
     } else {
@@ -828,11 +899,16 @@
     $grandTotal = $invoice->total_amount > 0 ? (float)$invoice->total_amount : ($taxableAmount + $totalGstLiability);
     @endphp
 
+    @if(!isset($isPdf))
     <!-- Action Buttons for Browser View -->
     <div class="no-print-bar">
         <a href="{{ route('invoice.create') }}" class="btn-back-action">← Back to Create Invoice</a>
-        <button class="btn-print-action" onclick="window.print()">🖨 Print Invoice</button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <a href="{{ route('invoice.pdf', ['id' => $invoice->id, 'download' => 1]) }}" class="btn-download-action">📥 Download Invoice</a>
+            <button class="btn-print-action" onclick="window.print()">🖨 Print Invoice</button>
+        </div>
     </div>
+    @endif
 
     <div class="invoice-container">
 
@@ -843,17 +919,16 @@
 
             <!-- PAGE 1: TAX INVOICE SUMMARY -->
             <div class="gst-page-1-wrapper">
-                <div>
-                    <!-- Top Header -->
-                    <div class="gst-company-header">
-                        <div style="display: flex; align-items: flex-start; gap: 8px;">
-                            <img src="{{ asset('assets/logo.jpg') }}" alt="Logo" style="width: 65px; height: auto; object-fit: contain; max-height: 45px;" onerror="this.style.display='none'">
+                <!-- Top Header -->
+                <div class="gst-company-header">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <img src="{{ asset('assets/logo.jpg') }}" alt="Logo" style="width: 155px; height: auto; object-fit: contain; max-height: 105px;" onerror="this.style.display='none'">
                             <div>
                                 <div class="gst-company-title">OMKAAR LOGISTICS</div>
                                 <div class="gst-company-sub">
                                     LALUNGGAON, NEAR NPS SCHOLL, KAMRUP METROPOLITAN, ASSAM, 781040<br>
                                     <strong>GST :</strong> 18AAHFO6045J1ZY &nbsp;&nbsp; <strong>PAN :</strong> AAHFO6045J<br>
-                                    <strong>E-mail :</strong> omkaar.logistics@gmail.com
+                                    <strong>E-mail :</strong> omkaar.lagistics@gmail.com
                                 </div>
                             </div>
                         </div>
@@ -915,7 +990,7 @@
                             <tbody>
                                 <!-- Main Description Row -->
                                 <tr class="main-desc-row">
-                                    <td class="gst-desc-cell" style="height: 80px;">
+                                    <td class="gst-desc-cell" style="height: 110px;">
                                         SUPPLY OF LOGISTICS SERVICES {{ $workingMonth }}
                                     </td>
                                     <td class="gst-hsn-cell">
@@ -969,18 +1044,18 @@
                         <div class="gst-bank-bottom-row">
                             <div class="gst-bank-bottom-left">
                                 <div><strong>PAN :</strong> AAHFO6045J</div>
-                                <div style="font-weight: bold; text-decoration: underline; margin-top: 1px; margin-bottom: 1px;">Bank Detail's</div>
-                                <div style="font-weight: bold;">Omkaar Logistics</div>
+                                <div style="font-weight: bold; font-size: 14.5px; text-decoration: underline; margin-top: 2px; margin-bottom: 2px;">Bank Detail's</div>
+                                <div style="font-weight: bold; font-size: 14.5px;">Omkaar Logistics</div>
                                 <div><strong>Account No :</strong> 5202870649</div>
                                 <div><strong>IFSC Code :</strong> CBIN0283591</div>
                                 <div><strong>Bank Name :</strong> Central Bank of India</div>
                                 <div><strong>Branch :</strong> Lalganesh</div>
                             </div>
                             <div class="gst-bank-bottom-right">
-                                <div style="text-align: right; font-size: 8px; font-weight: bold;">
-                                    <div style="font-weight: normal;">For</div>
-                                    <div style="margin-top: 2px;">Omkaar Logistics</div>
-                                    <div style="margin-top: 6px; font-size: 7px; font-weight: normal; font-style: italic; color: #444;">
+                                <div style="text-align: right; font-size: 13.5px; font-weight: bold;">
+                                    <div style="font-weight: normal; font-size: 13.5px;">For</div>
+                                    <div style="margin-top: 2px; font-size: 16px;">Omkaar Logistics</div>
+                                    <div style="margin-top: 6px; font-size: 11px; font-weight: normal; font-style: italic; color: #444;">
                                         (This is a System generated Bill)
                                     </div>
                                 </div>
@@ -988,7 +1063,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
             <!-- Page Break between Summary and Annexure -->
             <div class="page-break"></div>
@@ -1005,23 +1079,23 @@
                     <table class="annexure-table">
                         <thead>
                             <tr>
-                                <th style="width: {{ $hasPartyCnNo ? '6.5%' : '7%' }};">DATE</th>
-                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">C.N NO.</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.8%' }};">DATE</th>
+                                <th style="width: {{ $hasPartyCnNo ? '4.5%' : '4.8%' }};">C.N NO.</th>
                                 @if($hasPartyCnNo)
-                                    <th style="width: 6%;">PARTY CN NO</th>
+                                    <th style="width: 5.5%;">PARTY CN NO</th>
                                 @endif
-                                <th style="width: 3.5%;">PKT</th>
-                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '8%' }};">FROM</th>
-                                <th style="width: {{ $hasPartyCnNo ? '8%' : '8.5%' }};">DESTINATION</th>
-                                <th style="width: {{ $hasPartyCnNo ? '11.5%' : '13%' }};">CONSIGNEE</th>
-                                <th style="width: {{ $hasPartyCnNo ? '8%' : '9%' }};">ITEM GOODS</th>
-                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '8%' }};">INVOICE No.</th>
-                                <th style="width: 5.5%;">WGT</th>
-                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">RT/KG/CB</th>
-                                <th style="width: 5.5%;">STAT. CHG</th>
-                                <th style="width: 6%;">FR.AMT</th>
-                                <th style="width: 6.5%;">UNLOADING</th>
-                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">AMOUNT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '3%' : '3.2%' }};">PKT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '7.5%' }};">FROM</th>
+                                <th style="width: {{ $hasPartyCnNo ? '11%' : '11.2%' }};">DESTINATION</th>
+                                <th style="width: {{ $hasPartyCnNo ? '12%' : '13.5%' }};">CONSIGNEE</th>
+                                <th style="width: {{ $hasPartyCnNo ? '7%' : '8%' }};">ITEM GOODS</th>
+                                <th style="width: {{ $hasPartyCnNo ? '9.5%' : '9.5%' }};">INVOICE No.</th>
+                                <th style="width: 5%;">WGT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '5.5%' : '6%' }};">RT/KG/CB</th>
+                                <th style="width: 4.5%;">STAT. CHG</th>
+                                <th style="width: 5.5%;">FR.AMT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '5.5%' : '6%' }};">UNLOADING</th>
+                                <th style="width: {{ $hasPartyCnNo ? '8%' : '8.5%' }};">AMOUNT</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1039,7 +1113,9 @@
                                     <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->item_description }}</td>
                                     <td class="text-center cell-wrap">{{ $item->invoice_no_ref }}</td>
                                     <td class="text-center cell-nowrap">
-                                        @if(strtoupper($item->weight_type) === 'KG' && $item->weight > 0)
+                                        @if(strtoupper(trim($item->weight_type ?? '')) === 'FIXED' || strtoupper(trim($invoice->unit_filter ?? '')) === 'FIXED')
+                                            FIXED
+                                        @elseif(strtoupper(trim($item->weight_type ?? '')) === 'KG' && $item->weight > 0)
                                             {{ number_format($item->weight, 2) }}
                                         @elseif($item->weight > 0)
                                             {{ number_format($item->weight, 2) }}
@@ -1051,7 +1127,7 @@
                                     <td class="text-center cell-nowrap">{{ $item->st_charge > 0 ? number_format($item->st_charge, 0) : '0' }}</td>
                                     <td class="text-right cell-nowrap">{{ number_format($item->freight_amount, 2) }}</td>
                                     <td class="text-right cell-nowrap">{{ number_format($item->unload_amount, 2) }}</td>
-                                    <td class="text-right font-bold cell-nowrap">{{ number_format($item->amount, 2) }}</td>
+                                    <td class="text-right font-bold cell-nowrap" style="white-space: nowrap !important;">{{ number_format($item->amount, 2) }}</td>
                                 </tr>
                             @endforeach
                             <!-- Annexure Total Row -->
@@ -1059,7 +1135,7 @@
                                 <td colspan="{{ $hasPartyCnNo ? 11 : 10 }}" style="border-right: none;"></td>
                                 <td colspan="2" class="text-center font-bold" style="border-left: 1px solid #000;">Total</td>
                                 <td class="text-right"></td>
-                                <td class="text-right font-bold">{{ number_format($taxableAmount, 2) }}</td>
+                                <td class="text-right font-bold cell-nowrap" style="white-space: nowrap !important;">{{ number_format($taxableAmount, 2) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1073,18 +1149,18 @@
                 <!-- Notes and Signature Section -->
                 <div class="annexure-bottom-section">
                     <div class="annexure-notes-box">
-                        <div style="font-weight: bold; margin-bottom: 2px;">NOTE</div>
+                        <div style="font-weight: bold; font-size: 13.5px; margin-bottom: 3px;">NOTE</div>
                         <div>1. Please pay as per the due date given in this LOGISTICS SERVICES INVOICE.</div>
                         <div>2. Please pay through NEFT/RTGS in favour OMKAAR LOGISTICS</div>
-                        <div>3. Kindly e-mail payment advice on <strong>omkaar.logistics@gmail.com</strong></div>
+                        <div>3. Kindly e-mail payment advice on <strong>omkaar.lagistics@gmail.com</strong></div>
                         <div>4 Request you to please pay on time to avoid disruption in services.</div>
                         <div>5. TDS to be deducted as per the provision of section 194C.</div>
-                        <div>6. Please mail TDS certificate at <strong>omkaar.logistics@gmail.com</strong></div>
+                        <div>6. Please mail TDS certificate at <strong>omkaar.lagistics@gmail.com</strong></div>
                     </div>
                     <div class="annexure-sig-box">
-                        <div>For</div>
-                        <div style="margin-top: 2px; font-weight: bold;">Omkaar Logistics</div>
-                        <div style="margin-top: 6px; font-size: 7px; font-weight: normal; font-style: italic; color: #444;">
+                        <div style="font-weight: normal; font-size: 13.5px;">For</div>
+                        <div style="margin-top: 2px; font-size: 16px; font-weight: bold;">Omkaar Logistics</div>
+                        <div style="margin-top: 6px; font-size: 11px; font-weight: normal; font-style: italic; color: #444;">
                             (This is a System generated Bill)
                         </div>
                     </div>
@@ -1099,14 +1175,14 @@
                 <!-- Top Header & Meta Table -->
                 <div class="top-header-grid">
                     <div class="company-bill-to-left">
-                        <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
-                            <img src="{{ asset('assets/logo.jpg') }}" alt="Omkaar Logistics Logo" style="width: 70px; height: auto; object-fit: contain; max-height: 48px;" onerror="this.style.display='none'">
+                        <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 4px;">
+                            <img src="{{ asset('assets/logo.jpg') }}" alt="Omkaar Logistics Logo" style="width: 140px; height: auto; object-fit: contain; max-height: 95px;" onerror="this.style.display='none'">
                             <div>
                                 <div class="company-name-title">OMKAAR LOGISTICS</div>
                                 <div class="company-sub-details">
                                     LALUNGGAON, NEAR NPS SCHOOL, KAMRUP METROPOLITAN, ASSAM, 781040<br>
                                     <strong>GST :</strong> 18AAHFO6045J1ZY &nbsp;&nbsp; <strong>PAN :</strong> AAHFO6045J<br>
-                                    <strong>E-mail :</strong> omkaar.logistics@gmail.com
+                                    <strong>E-mail :</strong> omkaar.lagistics@gmail.com
                                 </div>
                             </div>
                         </div>
@@ -1155,23 +1231,23 @@
                     <table class="invoice-main-table">
                         <thead>
                             <tr>
-                                <th style="width: {{ $hasPartyCnNo ? '6.5%' : '7%' }};">DATE</th>
-                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">C.N NO.</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.8%' }};">DATE</th>
+                                <th style="width: {{ $hasPartyCnNo ? '4.5%' : '4.8%' }};">C.N NO.</th>
                                 @if($hasPartyCnNo)
-                                    <th style="width: 6%;">PARTY CN NO</th>
+                                    <th style="width: 5.5%;">PARTY CN NO</th>
                                 @endif
-                                <th style="width: 3.5%;">PKT</th>
-                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '8%' }};">FROM</th>
-                                <th style="width: {{ $hasPartyCnNo ? '8%' : '8.5%' }};">DESTINATION</th>
-                                <th style="width: {{ $hasPartyCnNo ? '11.5%' : '13%' }};">CONSIGNEE</th>
-                                <th style="width: {{ $hasPartyCnNo ? '8%' : '9%' }};">ITEM GOODS</th>
-                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '8%' }};">INVOICE No.</th>
-                                <th style="width: 5.5%;">WGT</th>
-                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">RT/KG/CB</th>
-                                <th style="width: 5.5%;">STAT. CHG</th>
-                                <th style="width: 6%;">FR.AMT</th>
-                                <th style="width: 6.5%;">UNLOADING</th>
-                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">AMOUNT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '3%' : '3.2%' }};">PKT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '7.5%' }};">FROM</th>
+                                <th style="width: {{ $hasPartyCnNo ? '11%' : '11.2%' }};">DESTINATION</th>
+                                <th style="width: {{ $hasPartyCnNo ? '12%' : '13.5%' }};">CONSIGNEE</th>
+                                <th style="width: {{ $hasPartyCnNo ? '7%' : '8%' }};">ITEM GOODS</th>
+                                <th style="width: {{ $hasPartyCnNo ? '9.5%' : '9.5%' }};">INVOICE No.</th>
+                                <th style="width: 5%;">WGT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '5.5%' : '6%' }};">RT/KG/CB</th>
+                                <th style="width: 4.5%;">STAT. CHG</th>
+                                <th style="width: 5.5%;">FR.AMT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '5.5%' : '6%' }};">UNLOADING</th>
+                                <th style="width: {{ $hasPartyCnNo ? '8%' : '8.5%' }};">AMOUNT</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1189,7 +1265,11 @@
                                     <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->item_description }}</td>
                                     <td class="text-center cell-wrap">{{ $item->invoice_no_ref }}</td>
                                     <td class="text-center cell-nowrap">
-                                        @if(strtoupper($item->weight_type) === 'KG' && $item->weight > 0)
+                                        @if(strtoupper(trim($item->weight_type ?? '')) === 'FIXED' || strtoupper(trim($invoice->unit_filter ?? '')) === 'FIXED')
+                                            FIXED
+                                        @elseif(strtoupper(trim($item->weight_type ?? '')) === 'KG' && $item->weight > 0)
+                                            {{ number_format($item->weight, 2) }}
+                                        @elseif($item->weight > 0)
                                             {{ number_format($item->weight, 2) }}
                                         @else
                                             {{ $item->weight_type ?: 'FIXED' }}
@@ -1199,7 +1279,7 @@
                                     <td class="text-center cell-nowrap">{{ $item->st_charge > 0 ? number_format($item->st_charge, 0) : '0' }}</td>
                                     <td class="text-right cell-nowrap">{{ number_format($item->freight_amount, 2) }}</td>
                                     <td class="text-right cell-nowrap">{{ number_format($item->unload_amount, 2) }}</td>
-                                    <td class="text-right font-bold cell-nowrap">{{ number_format($item->amount, 2) }}</td>
+                                    <td class="text-right font-bold cell-nowrap" style="white-space: nowrap !important;">{{ number_format($item->amount, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -1227,10 +1307,10 @@
                         <div class="notes-list">
                             1. Please pay as per the due date given in this LOGISTICS SERVICES INVOICE<br>
                             2. Please pay through NEFT/RTGS in favour OMKAAR LOGISTICS<br>
-                            3. Kindly e-mail payment advice on omkaar.logistics@gmail.com<br>
+                            3. Kindly e-mail payment advice on omkaar.lagistics@gmail.com<br>
                             4. Request you to please pay on time to avoid disruption in services.<br>
                             5. TDS to be deducted as per the provision of section 194C.<br>
-                            6. Please mail TDS certificate at omkaar.logistics@gmail.com
+                            6. Please mail TDS certificate at omkaar.lagistics@gmail.com
                         </div>
                     </div>
 
@@ -1271,16 +1351,16 @@
                                     <td>Yes</td>
                                 </tr>
                             @endif
-                            <tr style="font-size: 9px;">
+                            <tr style="font-size: 15.5px; font-weight: bold;">
                                 <td>Grand Total</td>
                                 <td>{{ number_format($invoice->total_amount, 2) }}</td>
                             </tr>
                         </table>
 
                         <div class="signature-box">
-                            <div>For</div>
-                            <div style="margin-top: 2px; font-weight: bold;">Omkaar Logistics</div>
-                            <div style="margin-top: 6px; font-size: 7px; font-weight: normal; font-style: italic; color: #444;">
+                            <div style="font-weight: normal; font-size: 13.5px;">For</div>
+                            <div style="margin-top: 2px; font-size: 16px; font-weight: bold;">Omkaar Logistics</div>
+                            <div style="margin-top: 6px; font-size: 11px; font-weight: normal; font-style: italic; color: #444;">
                                 (This is a System generated Bill)
                             </div>
                         </div>
