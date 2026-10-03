@@ -2055,7 +2055,7 @@
 
         // Auto compute unload amount if unload_rate > 0
         if (unloadRate > 0) {
-            const uAmt = (weight * unloadRate);
+            const uAmt = (pkts * unloadRate);
             const uAmtInput = document.getElementById(`unload_amount_${index}`);
             if (uAmtInput) uAmtInput.value = fmtCalcVal(uAmt);
         }
@@ -2260,11 +2260,12 @@
         });
     };
 
-    // Row Unloading Rate calculation
+    // Row Unloading Rate calculation (Calculates using PKT / Packages)
     window.updateRowUnloadRate = function(index, rate) {
-        const weight = parseFloat(document.getElementById(`weight_${index}`)?.value) || 0;
+        const pktsInput = document.querySelector(`input[name="items[${index}][packages]"]`);
+        const pkts = parseFloat(pktsInput?.value) || 0;
         const r = parseFloat(rate) || 0;
-        const unloadAmt = (weight * r);
+        const unloadAmt = (pkts * r);
         
         const uAmtInput = document.getElementById(`unload_amount_${index}`);
         if (uAmtInput) uAmtInput.value = unloadAmt > 0 ? (Number.isInteger(unloadAmt) ? unloadAmt : unloadAmt.toFixed(2)) : '';
