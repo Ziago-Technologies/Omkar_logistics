@@ -188,21 +188,24 @@
 
         .invoice-main-table th {
             border: 1px solid #000;
-            padding: 2px 1.5px;
+            padding: 3px 1px !important;
             text-align: center;
             font-weight: bold;
             background: #fff;
             text-transform: uppercase;
-            font-size: 7.5px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 7px;
+            line-height: 1.1;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
         }
 
         .invoice-main-table td {
             border: 1px solid #000;
-            padding: 2px 2px;
-            font-size: 7.5px;
-            line-height: 1.2;
+            padding: 4.5px 5px;
+            font-size: 8.5px;
+            line-height: 1.35;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
@@ -211,6 +214,8 @@
         .text-left { text-align: left; }
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
+        .cell-nowrap { white-space: nowrap !important; }
+        .cell-wrap { white-space: normal !important; word-wrap: break-word !important; overflow-wrap: break-word !important; }
 
         .amount-words-bar {
             border: 1.2px solid #000;
@@ -530,21 +535,24 @@
 
         .annexure-table th {
             border: 1px solid #000;
-            padding: 2px 1.5px;
+            padding: 3px 1px !important;
             text-align: center;
             font-weight: bold;
             background: #fff;
             text-transform: uppercase;
-            font-size: 7.5px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 7px;
+            line-height: 1.1;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
         }
 
         .annexure-table td {
             border: 1px solid #000;
-            padding: 2px 2px;
-            font-size: 7.5px;
-            line-height: 1.2;
+            padding: 4.5px 5px;
+            font-size: 8.5px;
+            line-height: 1.35;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
@@ -751,6 +759,15 @@
 
     // Format Invoice No Display (e.g. GSTOML2627045)
     $displayInvoiceNo = $invoice->formatted_invoice_no;
+
+    // Check if any bilties in this invoice have a PARTY CN NO
+    $hasPartyCnNo = false;
+    foreach ($invoice->items as $item) {
+        if (!empty(trim($item->cn_no ?? ''))) {
+            $hasPartyCnNo = true;
+            break;
+        }
+    }
 
     // State Code & State Name Resolution
     $stateCodes = [
@@ -988,35 +1005,40 @@
                     <table class="annexure-table">
                         <thead>
                             <tr>
-                                <th style="width: 7.5%;">DATE</th>
-                                <th style="width: 5.5%;">C.N NO.</th>
-                                <th style="width: 8.5%;">PARTY CN NO</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6.5%' : '7%' }};">DATE</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">C.N NO.</th>
+                                @if($hasPartyCnNo)
+                                    <th style="width: 6%;">PARTY CN NO</th>
+                                @endif
                                 <th style="width: 3.5%;">PKT</th>
-                                <th style="width: 8.5%;">FROM</th>
-                                <th style="width: 8.5%;">DESTINATION</th>
-                                <th style="width: 14.5%;">CONSIGNEE</th>
-                                <th style="width: 10.5%;">ITEM GOODS</th>
-                                <th style="width: 8%;">INVOICE No.</th>
-                                <th style="width: 5%;">WGT</th>
-                                <th style="width: 5%;">RT/KG/CB</th>
-                                <th style="width: 4.5%;">STAT. CHG</th>
-                                <th style="width: 5.5%;">FR.AMT</th>
-                                <th style="width: 5%;">UNLOAD ING</th>
-                                <th style="width: 5.5%;">AMOUNT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '8%' }};">FROM</th>
+                                <th style="width: {{ $hasPartyCnNo ? '8%' : '8.5%' }};">DESTINATION</th>
+                                <th style="width: {{ $hasPartyCnNo ? '11.5%' : '13%' }};">CONSIGNEE</th>
+                                <th style="width: {{ $hasPartyCnNo ? '8%' : '9%' }};">ITEM GOODS</th>
+                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '8%' }};">INVOICE No.</th>
+                                <th style="width: 5.5%;">WGT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">RT/KG/CB</th>
+                                <th style="width: 5.5%;">STAT. CHG</th>
+                                <th style="width: 6%;">FR.AMT</th>
+                                <th style="width: 6.5%;">UNLOADING</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">AMOUNT</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($invoice->items as $item)
                                 <tr>
-                                    <td class="text-center">{{ $item->bilty_date ? $item->bilty_date->format('j-m-Y') : '' }}</td>
-                                    <td class="text-center font-bold">{{ $item->bilty_no }}</td>
-                                    <td class="text-center">{{ $item->packages }}</td>
-                                    <td class="text-left" style="text-transform: uppercase;">{{ $item->from_location }}</td>
-                                    <td class="text-left" style="text-transform: uppercase;">{{ $item->to_location }}</td>
-                                    <td class="text-left" style="text-transform: uppercase;">{{ $item->consignee_name }}</td>
-                                    <td class="text-left" style="text-transform: uppercase;">{{ $item->item_description }}</td>
-                                    <td class="text-center">{{ $item->invoice_no_ref }}</td>
-                                    <td class="text-center">
+                                    <td class="text-center cell-nowrap">{{ $item->bilty_date ? $item->bilty_date->format('j-m-Y') : '' }}</td>
+                                    <td class="text-center font-bold cell-nowrap">{{ $item->bilty_no }}</td>
+                                    @if($hasPartyCnNo)
+                                        <td class="text-center cell-nowrap">{{ $item->cn_no ?? '' }}</td>
+                                    @endif
+                                    <td class="text-center cell-nowrap">{{ $item->packages }}</td>
+                                    <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->from_location }}</td>
+                                    <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->to_location }}</td>
+                                    <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->consignee_name }}</td>
+                                    <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->item_description }}</td>
+                                    <td class="text-center cell-wrap">{{ $item->invoice_no_ref }}</td>
+                                    <td class="text-center cell-nowrap">
                                         @if(strtoupper($item->weight_type) === 'KG' && $item->weight > 0)
                                             {{ number_format($item->weight, 2) }}
                                         @elseif($item->weight > 0)
@@ -1025,16 +1047,16 @@
                                             {{ $item->weight_type ?: 'FIXED' }}
                                         @endif
                                     </td>
-                                    <td class="text-center">{{ number_format($item->rate, 2) }}</td>
-                                    <td class="text-center">{{ $item->st_charge > 0 ? number_format($item->st_charge, 0) : '0' }}</td>
-                                    <td class="text-right">{{ number_format($item->freight_amount, 2) }}</td>
-                                    <td class="text-right">{{ number_format($item->unload_amount, 2) }}</td>
-                                    <td class="text-right font-bold">{{ number_format($item->amount, 2) }}</td>
+                                    <td class="text-center cell-nowrap">{{ number_format($item->rate, 2) }}</td>
+                                    <td class="text-center cell-nowrap">{{ $item->st_charge > 0 ? number_format($item->st_charge, 0) : '0' }}</td>
+                                    <td class="text-right cell-nowrap">{{ number_format($item->freight_amount, 2) }}</td>
+                                    <td class="text-right cell-nowrap">{{ number_format($item->unload_amount, 2) }}</td>
+                                    <td class="text-right font-bold cell-nowrap">{{ number_format($item->amount, 2) }}</td>
                                 </tr>
                             @endforeach
                             <!-- Annexure Total Row -->
                             <tr class="annexure-total-row">
-                                <td colspan="11" style="border-right: none;"></td>
+                                <td colspan="{{ $hasPartyCnNo ? 11 : 10 }}" style="border-right: none;"></td>
                                 <td colspan="2" class="text-center font-bold" style="border-left: 1px solid #000;">Total</td>
                                 <td class="text-right"></td>
                                 <td class="text-right font-bold">{{ number_format($taxableAmount, 2) }}</td>
@@ -1133,46 +1155,51 @@
                     <table class="invoice-main-table">
                         <thead>
                             <tr>
-                                <th style="width: 7.5%;">DATE</th>
-                                <th style="width: 5.5%;">C.N NO.</th>
-                                <th style="width: 8.5%;">PARTY CN NO</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6.5%' : '7%' }};">DATE</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">C.N NO.</th>
+                                @if($hasPartyCnNo)
+                                    <th style="width: 6%;">PARTY CN NO</th>
+                                @endif
                                 <th style="width: 3.5%;">PKT</th>
-                                <th style="width: 8.5%;">FROM</th>
-                                <th style="width: 8.5%;">DESTINATION</th>
-                                <th style="width: 14.5%;">CONSIGNEE</th>
-                                <th style="width: 10.5%;">ITEM GOODS</th>
-                                <th style="width: 8%;">INVOICE No.</th>
-                                <th style="width: 5%;">WGT</th>
-                                <th style="width: 5%;">RT/KG/CB</th>
-                                <th style="width: 4.5%;">STAT. CHG</th>
-                                <th style="width: 5.5%;">FR.AMT</th>
-                                <th style="width: 5%;">UNLOADING</th>
-                                <th style="width: 5.5%;">AMOUNT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '8%' }};">FROM</th>
+                                <th style="width: {{ $hasPartyCnNo ? '8%' : '8.5%' }};">DESTINATION</th>
+                                <th style="width: {{ $hasPartyCnNo ? '11.5%' : '13%' }};">CONSIGNEE</th>
+                                <th style="width: {{ $hasPartyCnNo ? '8%' : '9%' }};">ITEM GOODS</th>
+                                <th style="width: {{ $hasPartyCnNo ? '7.5%' : '8%' }};">INVOICE No.</th>
+                                <th style="width: 5.5%;">WGT</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">RT/KG/CB</th>
+                                <th style="width: 5.5%;">STAT. CHG</th>
+                                <th style="width: 6%;">FR.AMT</th>
+                                <th style="width: 6.5%;">UNLOADING</th>
+                                <th style="width: {{ $hasPartyCnNo ? '6%' : '6.5%' }};">AMOUNT</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($invoice->items as $item)
                                 <tr>
-                                    <td class="text-center">{{ $item->bilty_date ? $item->bilty_date->format('d-m-Y') : '' }}</td>
-                                    <td class="text-center font-bold">{{ $item->bilty_no }}</td>
-                                    <td class="text-center">{{ $item->packages }}</td>
-                                    <td class="text-left" style="text-transform: uppercase;">{{ $item->from_location }}</td>
-                                    <td class="text-left" style="text-transform: uppercase;">{{ $item->to_location }}</td>
-                                    <td class="text-left" style="text-transform: uppercase;">{{ $item->consignee_name }}</td>
-                                    <td class="text-left" style="text-transform: uppercase;">{{ $item->item_description }}</td>
-                                    <td class="text-center">{{ $item->invoice_no_ref }}</td>
-                                    <td class="text-center">
+                                    <td class="text-center cell-nowrap">{{ $item->bilty_date ? $item->bilty_date->format('d-m-Y') : '' }}</td>
+                                    <td class="text-center font-bold cell-nowrap">{{ $item->bilty_no }}</td>
+                                    @if($hasPartyCnNo)
+                                        <td class="text-center cell-nowrap">{{ $item->cn_no ?? '' }}</td>
+                                    @endif
+                                    <td class="text-center cell-nowrap">{{ $item->packages }}</td>
+                                    <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->from_location }}</td>
+                                    <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->to_location }}</td>
+                                    <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->consignee_name }}</td>
+                                    <td class="text-left cell-wrap" style="text-transform: uppercase;">{{ $item->item_description }}</td>
+                                    <td class="text-center cell-wrap">{{ $item->invoice_no_ref }}</td>
+                                    <td class="text-center cell-nowrap">
                                         @if(strtoupper($item->weight_type) === 'KG' && $item->weight > 0)
                                             {{ number_format($item->weight, 2) }}
                                         @else
                                             {{ $item->weight_type ?: 'FIXED' }}
                                         @endif
                                     </td>
-                                    <td class="text-center">{{ number_format($item->rate, 2) }}</td>
-                                    <td class="text-center">{{ $item->st_charge > 0 ? number_format($item->st_charge, 0) : '0' }}</td>
-                                    <td class="text-right">{{ number_format($item->freight_amount, 2) }}</td>
-                                    <td class="text-right">{{ number_format($item->unload_amount, 2) }}</td>
-                                    <td class="text-right font-bold">{{ number_format($item->amount, 2) }}</td>
+                                    <td class="text-center cell-nowrap">{{ number_format($item->rate, 2) }}</td>
+                                    <td class="text-center cell-nowrap">{{ $item->st_charge > 0 ? number_format($item->st_charge, 0) : '0' }}</td>
+                                    <td class="text-right cell-nowrap">{{ number_format($item->freight_amount, 2) }}</td>
+                                    <td class="text-right cell-nowrap">{{ number_format($item->unload_amount, 2) }}</td>
+                                    <td class="text-right font-bold cell-nowrap">{{ number_format($item->amount, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

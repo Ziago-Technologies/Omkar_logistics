@@ -25,15 +25,7 @@ class InvoiceController extends Controller
      */
     protected function getDefaultSeries()
     {
-        $fySession = session('financial_year', '2026-2027');
-        $defaultSeries = '26-27';
-        if ($fySession && $fySession !== 'ALL' && strpos($fySession, '-') !== false) {
-            $parts = explode('-', $fySession);
-            if (count($parts) === 2 && strlen(trim($parts[0])) >= 2 && strlen(trim($parts[1])) >= 2) {
-                $defaultSeries = substr(trim($parts[0]), -2) . '-' . substr(trim($parts[1]), -2);
-            }
-        }
-        return $defaultSeries;
+        return Invoice::getCurrentSeries();
     }
 
     /**
@@ -48,8 +40,7 @@ class InvoiceController extends Controller
         // 1. Next Invoice No for series
         $defaultSeries = $this->getDefaultSeries();
         $series = strtoupper(trim($request->query('series', $defaultSeries)));
-        $maxInvoiceNo = Invoice::where('series', $series)->max('invoice_no');
-        $nextInvoiceNo = ($maxInvoiceNo && $maxInvoiceNo >= 40) ? ($maxInvoiceNo + 1) : 40;
+        $nextInvoiceNo = Invoice::getNextAvailableInvoiceNo($series);
         $seriesList = \App\Models\Series::orderBy('name', 'asc')->get();
 
         // 2. All Debtors / Creditors / Parties from account_ledgers for Account autocomplete

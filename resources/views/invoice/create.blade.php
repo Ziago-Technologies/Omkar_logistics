@@ -162,7 +162,7 @@
 
     .party-bill-table td {
         border: 1px solid #bbb;
-        padding: 2px 3px !important;
+        padding: 4px 4px !important;
         text-align: center;
         white-space: normal !important;
         word-break: break-word !important;
@@ -184,7 +184,7 @@
         font-size: 12.5px;
         font-weight: 600;
         font-family: inherit;
-        padding: 1px 4px;
+        padding: 3px 5px;
         box-sizing: border-box !important;
         white-space: normal !important;
         word-break: break-word !important;
@@ -758,10 +758,7 @@
                         <button type="button" class="btn-desktop-cyan" id="btnDraftInvoice" onclick="submitInvoiceWithStatus('draft');" style="background: linear-gradient(to bottom, #fff8db 0%, #fae69e 50%, #f7d768 100%); border-color: #d4a017; font-weight: bold;" title="Save as Draft">
                             DRAFT
                         </button>
-                        <button type="button" class="btn-desktop-cyan" id="btnGenerateInvoice" onclick="submitInvoiceWithStatus('finalized');" style="font-weight: bold;" title="Save Invoice">
-                            SAVE
-                        </button>
-                        <button type="button" class="btn-desktop-cyan" id="btnPrintInvoice" onclick="handlePrintBtn();" title="Print Invoice">
+                        <button type="button" class="btn-desktop-cyan" id="btnPrintInvoice" onclick="handlePrintBtn();" style="font-weight: bold; background: linear-gradient(to bottom, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%); border-color: #2563eb;" title="Finalize & Print Invoice">
                             PRINT
                         </button>
                         <button type="button" class="btn-desktop-cyan" id="btnCancelInvoice" onclick="handleCancelBtn();" @if($isEdit ?? false) style="background: linear-gradient(to bottom, #fee2e2 0%, #fecaca 50%, #fca5a5 100%); border-color: #ef4444;" title="Cancel this Bill" @else title="Reset Form" @endif>
@@ -2058,6 +2055,50 @@
             }
         });
 
+        // Enter key navigation: Shift focus to the next cell / input field on Enter
+        const invoiceForm = document.getElementById('invoiceForm');
+        if (invoiceForm) {
+            invoiceForm.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.keyCode === 13) {
+                    const target = e.target;
+                    if (!target || !['INPUT', 'SELECT'].includes(target.tagName)) return;
+                    if (target.type === 'submit' || target.type === 'button') return;
+
+                    // If an autocomplete dropdown or select2 menu is open with an active option, let it handle Enter first
+                    const openDropdown = document.querySelector('.auto-grid-dropdown[style*="display: block"]');
+                    if (openDropdown && openDropdown.querySelector('.auto-grid-item.active')) {
+                        return;
+                    }
+                    if (document.querySelector('.select2-container--open')) {
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    // If focus is inside table, navigate table grid cells; otherwise navigate form inputs
+                    const table = target.closest('table');
+                    const container = table || invoiceForm;
+
+                    const focusables = Array.from(container.querySelectorAll('input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]):not([readonly])'))
+                        .filter(el => el.offsetParent !== null && el.tabIndex !== -1 && window.getComputedStyle(el).visibility !== 'hidden');
+
+                    const index = focusables.indexOf(target);
+                    if (index > -1) {
+                        const step = e.shiftKey ? -1 : 1;
+                        const nextIndex = index + step;
+
+                        if (nextIndex >= 0 && nextIndex < focusables.length) {
+                            const nextField = focusables[nextIndex];
+                            nextField.focus();
+                            if (typeof nextField.select === 'function' && nextField.type !== 'checkbox') {
+                                nextField.select();
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         // Automatic SweetAlert on save with Print Invoice button
         @if(session('print_invoice_id'))
             Swal.fire({
@@ -2490,72 +2531,94 @@
         window.recalculateTotals();
     };
 
-    // Print Button Handler
+    // Print Button Handler: Finalizes invoice status to 'finalized' and opens print view
     window.handlePrintBtn = function() {
+        const accountSelect = document.getElementById('account_name_select');
+        const accountName = accountSelect ? accountSelect.value.trim() : '';
+        const rows = document.querySelectorAll('#partyBillTableBody tr.selected-row');
+
+        if (!accountName || rows.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cannot Print Invoice',
+                text: 'Please select an Account and at least one consignment note before printing.',
+                confirmButtonColor: '#0f3460'
+            });
+            return;
+        }
+
+        const form = document.getElementById('invoiceForm');
+        if (!form) return;
+
+        updateAutoSaveIndicator('saving', 'Finalizing & saving invoice...');
+
+        const statusInput = document.getElementById('invoice_status');
+        if (statusInput) statusInput.value = 'finalized';
+
+        const formData = new FormData(form);
         const existingIdInput = document.getElementById('existing_invoice_id');
-        const invoiceId = existingIdInput ? existingIdInput.value : '';
+        const existingId = existingIdInput ? existingIdInput.value : '';
 
-        if (invoiceId) {
-            window.open(`{{ url('/invoice/print') }}/${invoiceId}`, '_blank');
+        let targetUrl = form.action;
+        if (existingId) {
+            formData.set('_method', 'PUT');
+            targetUrl = `{{ url('/invoice/update') }}/${existingId}`;
         } else {
-            const selectedItems = document.querySelectorAll('.row-checkbox:checked');
-            const invoiceForm = document.getElementById('invoiceForm');
+            formData.delete('_method');
+            targetUrl = `{{ route('invoice.store') }}`;
+        }
 
-            if (selectedItems.length > 0) {
-                Swal.fire({
-                    title: 'Print Invoice',
-                    text: 'Choose whether to save and print this invoice or open a print preview in the official layout:',
-                    icon: 'question',
-                    showDenyButton: true,
-                    showCancelButton: true,
-                    confirmButtonText: '💾 Save & Print',
-                    denyButtonText: '👁️ Print Preview',
-                    cancelButtonText: '📑 Invoice Register',
-                    confirmButtonColor: '#0f3460',
-                    denyButtonColor: '#2563eb',
-                    cancelButtonColor: '#64748b'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        let spInput = document.getElementById('save_and_print_input');
-                        if (!spInput) {
-                            spInput = document.createElement('input');
-                            spInput.type = 'hidden';
-                            spInput.name = 'save_and_print';
-                            spInput.id = 'save_and_print_input';
-                            invoiceForm.appendChild(spInput);
-                        }
-                        spInput.value = '1';
-                        invoiceForm.submit();
-                    } else if (result.isDenied) {
-                        const originalAction = invoiceForm.action;
-                        const originalTarget = invoiceForm.target;
-                        invoiceForm.action = "{{ route('invoice.preview') }}";
-                        invoiceForm.target = "_blank";
-                        invoiceForm.submit();
-                        setTimeout(() => {
-                            invoiceForm.action = originalAction;
-                            invoiceForm.target = originalTarget;
-                        }, 500);
-                    } else if (result.dismiss === Swal.DismissReason.cancel) {
-                        window.location.href = "{{ route('invoice.register') }}";
+        fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => { throw new Error(errData.message || 'Server error ' + response.status); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const targetId = data.invoice_id || existingId;
+                if (data.invoice_id) {
+                    if (existingIdInput) existingIdInput.value = data.invoice_id;
+                    form.action = data.update_url || `{{ url('/invoice/update') }}/${data.invoice_id}`;
+                    if (data.edit_url && window.location.pathname !== `/invoice/edit/${data.invoice_id}`) {
+                        window.history.replaceState({}, '', data.edit_url);
                     }
-                });
+                }
+
+                updateAutoSaveIndicator('saved', 'Invoice Finalized & Saved');
+
+                if (targetId) {
+                    window.open(`{{ url('/invoice/print') }}/${targetId}`, '_blank');
+                }
             } else {
+                updateAutoSaveIndicator('error', data.message || 'Finalize failed');
                 Swal.fire({
-                    title: 'No Items Selected',
-                    text: 'Select an Account and Consignment Notes above to generate an invoice, or open the Invoice Register to print existing invoices.',
-                    icon: 'info',
-                    showCancelButton: true,
-                    confirmButtonText: '📑 Go to Invoice Register',
-                    cancelButtonText: 'Close',
+                    title: 'Finalize Failed',
+                    text: data.message || 'Could not finalize invoice.',
+                    icon: 'error',
                     confirmButtonColor: '#0f3460'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = "{{ route('invoice.register') }}";
-                    }
                 });
             }
-        }
+        })
+        .catch(err => {
+            console.error('Print Finalize error:', err);
+            updateAutoSaveIndicator('error', err.message || 'Finalize failed');
+            Swal.fire({
+                title: 'Print Error',
+                text: err.message || 'An error occurred while finalizing invoice.',
+                icon: 'error',
+                confirmButtonColor: '#0f3460'
+            });
+        });
     };
 
     // Cancel Button Handler

@@ -69,11 +69,47 @@ class Invoice extends Model
     }
 
     /**
+     * Dynamically determine the active financial year series string e.g. '26-27', '27-28'.
+     */
+    public static function getCurrentSeries($date = null): string
+    {
+        if ($date) {
+            $c = \Carbon\Carbon::parse($date);
+            $year = $c->year;
+            $month = $c->month;
+            $startYear = ($month < 4) ? ($year - 1) : $year;
+            $endYear = $startYear + 1;
+            return sprintf('%02d-%02d', $startYear % 100, $endYear % 100);
+        }
+
+        if (function_exists('session') && session()->has('financial_year')) {
+            $fySession = session('financial_year');
+            if ($fySession && $fySession !== 'ALL' && strpos($fySession, '-') !== false) {
+                $parts = explode('-', $fySession);
+                if (count($parts) === 2 && strlen(trim($parts[0])) >= 2 && strlen(trim($parts[1])) >= 2) {
+                    return substr(trim($parts[0]), -2) . '-' . substr(trim($parts[1]), -2);
+                }
+            }
+        }
+
+        $now = \Carbon\Carbon::now();
+        $year = $now->year;
+        $month = $now->month;
+        $startYear = ($month < 4) ? ($year - 1) : $year;
+        $endYear = $startYear + 1;
+        return sprintf('%02d-%02d', $startYear % 100, $endYear % 100);
+    }
+
+    /**
      * Format numeric invoice number to string e.g. GSTOML2627045
      */
-    public static function formatInvoiceNo($num, $series = '26-27'): string
+    public static function formatInvoiceNo($num, $series = null): string
     {
         if ($num === null || $num === '') return '';
+
+        if (empty($series)) {
+            $series = static::getCurrentSeries();
+        }
 
         $prefix = 'GSTOML';
         $cleanSeries = '2627';
@@ -119,5 +155,27 @@ class Invoice extends Model
     public function getFormattedInvoiceNoAttribute(): string
     {
         return static::formatInvoiceNo($this->invoice_no, $this->series);
+    }
+
+    /**
+     * Find the next available/unused integer invoice_no for the given series.
+     */
+    public static function getNextAvailableInvoiceNo($series = null): int
+    {
+        if (empty($series)) {
+            $series = static::getCurrentSeries();
+        }
+
+        $usedNumbers = static::where('series', $series)->pluck('invoice_no')->toArray();
+        $usedMap = array_flip($usedNumbers);
+
+        $maxUsed = !empty($usedNumbers) ? max($usedNumbers) : 39;
+        $candidate = ($maxUsed >= 40) ? ($maxUsed + 1) : 40;
+
+        while (isset($usedMap[$candidate])) {
+            $candidate++;
+        }
+
+        return $candidate;
     }
 }
